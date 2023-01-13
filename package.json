@@ -1,0 +1,30 @@
+{
+  "name": "graphql-yoga-cloudflare-workers",
+  "description": "Fully-featured, simple to set up, performant and extendable GraphQL server",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "wrangler dev",
+    "check": "tsc --pretty --noEmit"
+  },
+  "dependencies": {
+    "@graphql-tools/schema": "^9.0.13",
+    "graphiql": "^2.2.0",
+    "graphql": "16.3.0",
+    "graphql-ws": "^5.11.2",
+    "graphql-yoga": "three",
+    "uuid": "^9.0.0"
+  },
+  "resolutions": {
+    "graphql": "16.3.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20221111.1",
+    "@databases/split-sql-query": "^1.0.3",
+    "@databases/sql": "^3.2.0",
+    "@types/uuid": "^9.0.0",
+    "better-sqlite3": "^7.6.2",
+    "service-worker-mock": "2.0.5",
+    "wrangler": "^2.6.2"
+  }
+}
