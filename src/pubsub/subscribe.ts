@@ -36,9 +36,10 @@ export const subscribe = (
 
   state.waitUntil(
     env.SUBSCRIPTIONS_DEV.prepare(
-      "INSERT INTO Subscriptions(connectionId, subscription, topic, filter) VALUES(?,?,?,?);"
+      "INSERT INTO Subscriptions(id,connectionId, subscription, topic, filter) VALUES(?,?,?,?,?);"
     )
       .bind(
+        data.id,
         connectionId,
         JSON.stringify({
           query: data.payload.query,
