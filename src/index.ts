@@ -138,7 +138,7 @@ export class WsConnection implements DurableObject {
         this.server?.close();
       case "/publish":
         const req = await request.text();
-        this.client?.send(req);
+        this.server?.send(req);
         return new Response("ok");
       default:
         throw new Error("bad_request");
