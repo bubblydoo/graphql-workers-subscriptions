@@ -79,8 +79,6 @@ export async function useWebsocket(
             if (data.type === "subscribe") {
               subscribe(connectionId, schema, data, state, env);
             } else {
-              console.log(data.payload);
-
               cb(JSON.stringify(data));
             }
             // if ((event.data.valueOf() as string) === "subscribe") {
