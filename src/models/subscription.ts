@@ -1,7 +1,7 @@
-export interface Subscription {
+export interface Subscription{
   id: string;
   connectionId: string;
-  filter?: string;
+  filter?: any;
   subscription: { query: string; variables?: any; operationName: string };
   topic: string;
 }

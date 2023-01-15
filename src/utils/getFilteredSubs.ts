@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// import { collect } from "streaming-iterables";
 import { Subscription } from "../models/subscription";
 import { ENV } from "..";
+import { isMatch } from "lodash";
 export const getFilteredSubs = async (
   env: ENV,
   event: { topic: string; payload?: Record<string, any> }
@@ -12,13 +11,19 @@ export const getFilteredSubs = async (
     .bind(event.topic)
     .all();
   //   if (!event.payload || Object.keys(event.payload).length === 0) {
-  return results?.map((res: any) => ({
+  const parsedResults = results?.map((res: any) => ({
     ...res,
     filter: typeof res.filter === "string" ? JSON.parse(res.filter) : undefined,
     subscription:
-      typeof res.subscription === "string" ? JSON.parse(res.subscription) : undefined,
+      typeof res.subscription === "string"
+        ? JSON.parse(res.subscription)
+        : undefined,
   })) as Subscription[] | [];
 
+  const filteredResults = parsedResults.filter((sub) =>
+    sub.filter && event.payload ? isMatch(event.payload, sub.filter) : true
+  );
+  return filteredResults;
   //   }
   //   const flattenPayload = collapseKeys(event.payload);
 

@@ -26,7 +26,7 @@ const resolvers = {
     greetings: {
       subscribe: createFakeSubIterator("LIST_GREETINGS", {
         filter: () => {
-          return { greetings: { filter: "key" } };
+          return { greetings: "hehe" };
         },
       }),
     },
