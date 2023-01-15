@@ -9,23 +9,24 @@ export const publish =
     const subscriptions: Subscription[] = await getFilteredSubs(env, event);
 
     const iters = subscriptions.map(async (sub) => {
-    //   const payload = await execute({
-    //     schema: schema,
-    //     document: parse(sub.subscription.query),
-    //     rootValue: event,
-    //     // contextValue: await buildContext({
-    //     //   server,
-    //     //   connectionInitPayload: sub.connectionInitPayload,
-    //     //   connectionId: sub.connectionId,
-    //     // }),
-    //     variableValues: sub.subscription.variables,
-    //     operationName: sub.subscription.operationName,
-    //   });
+      const payload = await execute({
+        schema: schema,
+        document: parse(sub.subscription.query),
+        rootValue: event.payload,
+        // contextValue: await buildContext({
+        //   server,
+        //   connectionInitPayload: sub.connectionInitPayload,
+        //   connectionId: sub.connectionId,
+        // }),
+        variableValues: sub.subscription.variables,
+        operationName: sub.subscription.operationName,
+      });
+      //   console.log(payload);
 
       const message: NextMessage = {
         id: sub.id,
         type: MessageType.Next,
-        payload: { data: event.payload },
+        payload,
       };
 
       const DOId = env.WS_CONNECTION.idFromString(sub.connectionId);
