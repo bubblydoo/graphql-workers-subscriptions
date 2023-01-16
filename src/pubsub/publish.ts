@@ -1,13 +1,32 @@
 import { Subscription } from "@/models/subscription";
-import { getFilteredSubs } from "@/utils/getFilteredSubs";
+import { querySubscriptions } from "@/utils/query-helpers";
 import { GraphQLSchema, parse, execute } from "graphql";
 import { MessageType, NextMessage } from "graphql-ws";
-import { ENV } from "..";
 
 export const publish =
-  (env: ENV, schema: GraphQLSchema) => async (event: any) => {
-    const subscriptions: Subscription[] = await getFilteredSubs(env, event);
+  (
+    WS_CONNECTION: DurableObjectNamespace,
+    SUBSCRIPTIONS_DB: D1Database,
+    schema: GraphQLSchema
+  ) =>
+  async (event: any) => {
+    const { results } = await querySubscriptions(
+      SUBSCRIPTIONS_DB,
+      "Subscriptions",
+      event.topic,
+      event.payload
+    );
 
+    const subscriptions = results?.map((res: any) => ({
+      ...res,
+      filter:
+        typeof res.filter === "string" ? JSON.parse(res.filter) : undefined,
+      subscription:
+        typeof res.subscription === "string"
+          ? JSON.parse(res.subscription)
+          : undefined,
+    })) as Subscription[];
+    
     // promises of sent subscription messages
     const iters = subscriptions.map(async (sub) => {
       // execution of subscription with payload as the root (can be modified within the resolve callback defined in schema)
@@ -32,8 +51,8 @@ export const publish =
         payload,
       };
       // request to already existing DO
-      const DOId = env.WS_CONNECTION.idFromString(sub.connectionId);
-      const DO = env.WS_CONNECTION.get(DOId);
+      const DOId = WS_CONNECTION.idFromString(sub.connectionId);
+      const DO = WS_CONNECTION.get(DOId);
       DO.fetch("https://websocket.io/publish", {
         method: "POST",
         body: JSON.stringify(message),

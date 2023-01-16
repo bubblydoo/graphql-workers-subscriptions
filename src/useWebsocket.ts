@@ -6,7 +6,6 @@ import {
 } from "graphql-ws";
 import { GraphQLSchema } from "graphql";
 import type { WebSocket } from "@cloudflare/workers-types";
-import { ENV } from ".";
 import { subscribe } from "./pubsub/subscribe";
 
 // use cloudflare server websocket for graphql-ws
@@ -15,7 +14,7 @@ export async function useWebsocket(
   request: Request,
   protocol: ReturnType<typeof handleProtocols>,
   schema: GraphQLSchema,
-  env: ENV,
+  SUBSCRIPTIONS_DB: D1Database,
   state: DurableObjectState
 ) {
   // configure and make server
@@ -71,7 +70,7 @@ export async function useWebsocket(
 
             if (data.type === "subscribe") {
               // handle subscribe with specific handler
-              subscribe(connectionId, schema, data, state, env);
+              subscribe(connectionId, schema, data, state, SUBSCRIPTIONS_DB);
             } else {
               // or just use default handler
               cb(JSON.stringify(data));
@@ -95,7 +94,7 @@ export async function useWebsocket(
 
     // this callback is called whenever the socket closes, so deleting from D1 only here is enough
     state.waitUntil(
-      env.SUBSCRIPTIONS_DEV.prepare(
+      SUBSCRIPTIONS_DB.prepare(
         "DELETE FROM Subscriptions WHERE connectionId = ? ;"
       )
         .bind(connectionId)

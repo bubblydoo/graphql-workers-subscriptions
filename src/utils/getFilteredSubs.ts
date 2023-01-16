@@ -1,14 +1,13 @@
 import { Subscription } from "../models/subscription";
-import { ENV } from "..";
 import { isMatch } from "lodash";
 
 // queries and returns a set (filtered) of subscriptions from D1
 export const getFilteredSubs = async (
-  env: ENV,
+  SUBSCRIPTIONS_DB: D1Database,
   event: { topic: string; payload?: Record<string, any> }
 ): Promise<Subscription[]> => {
   // build and execute query
-  const { results } = await env.SUBSCRIPTIONS_DEV.prepare(
+  const { results } = await SUBSCRIPTIONS_DB.prepare(
     "SELECT * FROM Subscriptions WHERE topic = ?"
   )
     .bind(event.topic)

@@ -1,3 +1,4 @@
 worker/
 dist/
 node_modules/
+.wrangler

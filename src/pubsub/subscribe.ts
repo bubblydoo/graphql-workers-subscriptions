@@ -1,6 +1,5 @@
 import { parse } from "graphql";
 import type { SubscribePseudoIterable, PubSubEvent } from "../types";
-import { ENV } from "..";
 import {
   buildExecutionContext,
   ExecutionContext,
@@ -13,7 +12,7 @@ export const subscribe = (
   schema: GraphQLSchema,
   data: any,
   state: DurableObjectState,
-  env: ENV
+  SUBSCRIPTIONS_DB: D1Database
 ) => {
   // extract subscriptoin related values based on schema
   const execContext = buildExecutionContext({
@@ -32,13 +31,13 @@ export const subscribe = (
 
   const { topic, filter, onSubscribe, onAfterSubscribe } =
     field.subscribe as SubscribePseudoIterable<PubSubEvent>;
-  // execture filter callback if defined (return filter data saved to D1)
+  // execute filter callback if defined (return filter data saved to D1)
   const filterData =
     typeof filter === "function" ? filter(root, args, context, info) : filter;
 
   // write subscription to D1
   state.waitUntil(
-    env.SUBSCRIPTIONS_DEV.prepare(
+    SUBSCRIPTIONS_DB.prepare(
       "INSERT INTO Subscriptions(id,connectionId, subscription, topic, filter) VALUES(?,?,?,?,?);"
     )
       .bind(
