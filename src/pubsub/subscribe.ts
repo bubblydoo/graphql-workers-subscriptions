@@ -6,8 +6,8 @@ import {
   ExecutionContext,
 } from "graphql/execution/execute";
 import { getResolverAndArgs } from "../utils/getResolverAndArgs";
-import { makeExecutableSchema } from "@graphql-tools/schema";
 import { GraphQLSchema } from "graphql";
+
 export const subscribe = (
   connectionId: string,
   schema: GraphQLSchema,
@@ -15,6 +15,7 @@ export const subscribe = (
   state: DurableObjectState,
   env: ENV
 ) => {
+  // extract subscriptoin related values based on schema
   const execContext = buildExecutionContext({
     schema,
     document: parse(data.payload.query),
@@ -31,9 +32,11 @@ export const subscribe = (
 
   const { topic, filter, onSubscribe, onAfterSubscribe } =
     field.subscribe as SubscribePseudoIterable<PubSubEvent>;
+  // execture filter callback if defined (return filter data saved to D1)
   const filterData =
     typeof filter === "function" ? filter(root, args, context, info) : filter;
 
+  // write subscription to D1
   state.waitUntil(
     env.SUBSCRIPTIONS_DEV.prepare(
       "INSERT INTO Subscriptions(id,connectionId, subscription, topic, filter) VALUES(?,?,?,?,?);"

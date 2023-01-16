@@ -30,8 +30,8 @@ export async function useWebsocket(
   let pinger: any, pongWait: any;
   const connectionId = state.id.toString();
   function ping() {
+    // READY_STATE_OPEN value
     if (socket.readyState === 1) {
-      // READY_STATE_OPEN value
       // send the subprotocol level ping message
       socket.send(stringifyMessage({ type: MessageType.Ping }));
 
@@ -66,29 +66,18 @@ export async function useWebsocket(
       onMessage: (cb) =>
         socket.addEventListener("message", async (event) => {
           try {
-            // wait for the the operation to complete
-            // - if init message, waits for connect
-            // - if query/mutation, waits for result
-            // - if subscription, waits for complete
-
-            //TODO: if subscription write to D1 and do not call the callback!
-            // FIXME: should be checked wether it is an array buffer
-            console.log(event.data);
-
+            // parsing payload so type can be checked
             const data = JSON.parse(event.data.valueOf() as any);
+
             if (data.type === "subscribe") {
+              // handle subscribe with specific handler
               subscribe(connectionId, schema, data, state, env);
             } else {
+              // or just use default handler
               cb(JSON.stringify(data));
             }
-            // if ((event.data.valueOf() as string) === "subscribe") {
-            // }
           } catch (err) {
             console.error(err);
-            // all errors that could be thrown during the
-            // execution of operations will be caught here
-            //TODO: delete from D1 (need the subscription ID)
-            //need: connection ID, topic, filter (null for now)
             socket.close(1011, (err as any).message);
           }
         }),
@@ -104,13 +93,14 @@ export async function useWebsocket(
     clearTimeout(pongWait);
     clearInterval(pinger);
 
+    // this callback is called whenever the socket closes, so deleting from D1 only here is enough
     state.waitUntil(
       env.SUBSCRIPTIONS_DEV.prepare(
         "DELETE FROM Subscriptions WHERE connectionId = ? ;"
       )
         .bind(connectionId)
         .run()
-        .then()
+        .then() // to return empty promise
     );
     callOnClosed(code, reason);
   }) as any);

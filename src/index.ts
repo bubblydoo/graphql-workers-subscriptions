@@ -1,54 +1,34 @@
 import { handleProtocols, MessageType } from "graphql-ws";
 import { createYoga, createSchema } from "graphql-yoga";
 import { useWebsocket } from "./useWebsocket";
-import { createFakeSubIterator } from "./utils/createFakeSubIterator";
 import { D1Database } from "./utils/D1Database";
 import { publish } from "./pubsub/publish";
 import { makeExecutableSchema } from "@graphql-tools/schema";
+import { typeDefs } from "./graphql/typeDefs";
+import { resolvers } from "./graphql/resolvers";
 export interface ENV {
   WS_CONNECTION: DurableObjectNamespace;
   SUBSCRIPTIONS_DEV: D1Database;
 }
-const typeDefs = /* GraphQL */ `
-  type Subscription {
-    greetings: String
-  }
-  type Query {
-    hello: String!
-  }
-`;
 
-const resolvers = {
-  Query: {
-    hello: () => "Hello World!",
-  },
-  Subscription: {
-    greetings: {
-      subscribe: createFakeSubIterator("LIST_GREETINGS", {
-        filter: () => {
-          return { greetings: "hehe" };
-        },
-      }),
-    },
-  },
-};
 const schema = makeExecutableSchema({ typeDefs, resolvers });
-// const yoga = createYoga({
-//   schema: createSchema({
-//     typeDefs,
-//     resolvers,
-//   }),
-//   graphiql: {
-//     // Use WebSockets in GraphiQL
-//     subscriptionsProtocol: "WS",
-//   },
-// })
+const yoga = createYoga({
+  schema: createSchema({
+    typeDefs,
+    resolvers,
+  }),
+  graphiql: {
+    // Use WebSockets in GraphiQL
+    subscriptionsProtocol: "WS",
+  },
+});
 export default {
   async fetch(request, env, context) {
     // const url = new URL(request.url);
     const upgradeHeader = request.headers.get("Upgrade");
     const path = new URL(request.url).pathname;
 
+    // non ws requests
     if (upgradeHeader !== "websocket") {
       if (path === "/api") {
         const query = env.SUBSCRIPTIONS_DEV.prepare(
@@ -61,40 +41,29 @@ export default {
         context.waitUntil(p(await request.json()));
         return new Response("ok");
       }
-      // return new Response("ok");
-      return createYoga({
-        schema: createSchema({
-          typeDefs,
-          resolvers,
-        }),
-        graphiql: {
-          // Use WebSockets in GraphiQL
-          subscriptionsProtocol: "WS",
-        },
-      }).fetch(request, env, context);
+
+      return yoga.fetch(request, env, context);
     }
 
+    // ws request forwarded to a durable object
     const subId = env.WS_CONNECTION.newUniqueId();
-    const connection = env.WS_CONNECTION.get(subId);
-    return await connection.fetch(
-      "https://websocket.io/websocket",
-      request.clone()
-    );
+    const stub = env.WS_CONNECTION.get(subId);
+    return await stub.fetch("https://websocket.io/connect", request.clone());
   },
 } as ExportedHandler<ENV>;
 
 export class WsConnection implements DurableObject {
   private server: WebSocket | undefined;
-  private client: WebSocket | undefined;
   constructor(private state: DurableObjectState, private env: ENV) {
+    // if there is a D1Database prefix, assign it to the original key too
     const defaultToD1BetaPrefix = (namespace: keyof ENV) => {
       const d1BetaPrefix = "__D1_BETA__";
       return env[namespace] || (env as any)[d1BetaPrefix + namespace].prepare
         ? (env as any)[d1BetaPrefix + namespace]
         : new D1Database((env as any)[d1BetaPrefix + namespace]);
     };
-    this.state = state;
 
+    this.state = state;
     this.env = {
       ...env,
       SUBSCRIPTIONS_DEV: defaultToD1BetaPrefix(
@@ -104,16 +73,17 @@ export class WsConnection implements DurableObject {
   }
   async fetch(request: Request) {
     const path = new URL(request.url).pathname;
+    // DO router
     switch (path) {
-      case "/websocket":
+      // connection will be established here
+      case "/connect":
+        // creating ws pair (we use server to send to the client and we return the client in the response)
         const [client, server] = Object.values(new WebSocketPair()) as any[];
         this.server = server;
-        this.client = client;
         const protocol = handleProtocols(
           request.headers.get("Sec-WebSocket-Protocol")!
         );
 
-        // durable object
         await useWebsocket(
           server,
           request,
@@ -134,9 +104,10 @@ export class WsConnection implements DurableObject {
             : {},
         });
       case "/close":
-        //TODO: delete from D1 (need the subscription ID)
+        // delete from D1 handled internally
         this.server?.close();
       case "/publish":
+        // POST request with topic and payload transformed into a ws message via the publish handler
         const req = await request.text();
         this.server?.send(req);
         return new Response("ok");

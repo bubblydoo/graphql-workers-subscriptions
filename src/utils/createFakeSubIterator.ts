@@ -13,6 +13,7 @@ export const createFakeSubIterator = <
   const handler = createHandler<T>();
   handler.topic = topic;
   handler.filter = filter;
+  // TODO: can be implemented
   //   handler.onSubscribe = onSubscribe;
   //   handler.onComplete = onComplete;
   //   handler.onAfterSubscribe = onAfterSubscribe;
