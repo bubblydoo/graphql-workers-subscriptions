@@ -15,7 +15,7 @@
     "start": "wrangler dev",
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "check": "tsc --pretty --noEmit",
-    "build-app": "esbuild src/app/app.ts --bundle --format=esm --outfile=dist-app/app.js"
+    "build-app": "esbuild src/app/app.ts --bundle --format=esm --conditions=require --outfile=dist-app/app.js"
   },
   "dependencies": {
     "@graphql-tools/schema": "^9.0.13",
