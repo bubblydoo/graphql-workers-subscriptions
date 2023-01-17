@@ -15,7 +15,7 @@
     "start": "wrangler dev",
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "check": "tsc --pretty --noEmit",
-    "build-app": "esbuild src/app/app.ts --bundle --format=esm --conditions=require --outfile=dist-app/app.js"
+    "build-app": "esbuild src/app/app.ts --bundle --format=esm --outfile=dist-app/app.js --resolve-extensions=.mts,.mjs,.ts,.js,.json"
   },
   "dependencies": {
     "@graphql-tools/schema": "^9.0.13",
@@ -35,6 +35,7 @@
     "@types/lodash": "^4.14.191",
     "better-sqlite3": "^8.0.1",
     "esbuild": "^0.17.2",
+    "esbuild-visualizer": "^0.4.0",
     "service-worker-mock": "2.0.5",
     "tsup": "^6.5.0",
     "typescript": "^4.9.4",
