@@ -18,6 +18,7 @@ export const schema = makeExecutableSchema<DefaultPublishableContext<ENV>>({
     type Greeting {
       greeting: String
     }
+    type Query {}
     type Subscription {
       greetings(greeting: String): Greeting
     }
