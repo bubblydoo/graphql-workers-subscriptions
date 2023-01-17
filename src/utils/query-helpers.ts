@@ -53,8 +53,8 @@ export const querySubscriptions = (
 ) => {
   const { sql, binds } = getQuerySubscriptionsSql(dbName, topic, filter);
 
-  console.log(sql);
-  console.log(binds);
+  console.log(db);
+  console.log(sql, binds);
 
   return db
     .prepare(sql)

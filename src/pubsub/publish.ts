@@ -50,10 +50,10 @@ export const publish =
       // request to already existing DO
       const DOId = WS_CONNECTION.idFromString(sub.connectionId);
       const DO = WS_CONNECTION.get(DOId);
-      DO.fetch("https://websocket.io/publish", {
+      await DO.fetch("https://websocket.io/publish", {
         method: "POST",
         body: JSON.stringify(message),
       });
     });
-    await Promise.all(iters);
+    return await Promise.all(iters).then(() => undefined);
   };

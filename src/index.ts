@@ -6,7 +6,7 @@ export { createWsConnectionClass } from "./wsConnection";
 export { createFakeSubIterator as subscribe } from "./utils/createFakeSubIterator";
 
 export type PublishableContext = {
-  publish: (topic: string, payload: any) => void;
+  publish: (topic: string, payload: any) => Promise<void>;
 };
 
 export type DefaultPublishableContext<Env extends {} = {}> = {
@@ -37,7 +37,8 @@ export function createDefaultPublishableContext<Env extends {} = {}>({
         schema,
         publishableCtx
       );
-      executionCtx.waitUntil(publishFn({ topic, payload }));
+
+      return publishFn({ topic, payload });
     },
   };
   return publishableCtx;
