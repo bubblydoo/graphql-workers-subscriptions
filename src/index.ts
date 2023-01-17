@@ -30,17 +30,14 @@ export function createDefaultPublishableContext<Env extends {} = {}>({
   const publishableCtx: DefaultPublishableContext<Env> = {
     env,
     executionCtx,
-    publish: (opts) => {
+    publish: (topic, payload) => {
       const publishFn = publish(
         getWSConnectionDO(env),
         getSubscriptionsDB(env),
         schema,
-        {
-          env,
-          executionCtx: env,
-        }
+        publishableCtx
       );
-      executionCtx.waitUntil(publishFn(opts));
+      executionCtx.waitUntil(publishFn({ topic, payload }));
     },
   };
   return publishableCtx;

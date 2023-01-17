@@ -18,7 +18,9 @@ export const schema = makeExecutableSchema<DefaultPublishableContext<ENV>>({
     type Greeting {
       greeting: String
     }
-    type Query {}
+    type Query {
+      hello: String
+    }
     type Subscription {
       greetings(greeting: String): Greeting
     }
@@ -29,15 +31,19 @@ export const schema = makeExecutableSchema<DefaultPublishableContext<ENV>>({
   resolvers: {
     Mutation: {
       greet: (root, args, context) => {
-        context.publish("LIST_GREETINGS", { greeting: args.greeting });
+        context.publish("GREETINGS", {
+          greetings: { greeting: args.greeting },
+        });
         return "ok";
-      }
+      },
     },
     Subscription: {
       greetings: {
-        subscribe: subscribe("LIST_GREETINGS", {
+        subscribe: subscribe("GREETINGS", {
           filter: (root, args, context, info) => {
-            return args.greeting ? { greeting: args.greeting } : {};
+            return args.greeting
+              ? { greetings: { greeting: args.greeting } }
+              : {};
           },
         }),
       },
