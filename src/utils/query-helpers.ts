@@ -18,14 +18,16 @@ const filterObjectToSqliteClauses = (obj: any) => {
   const whereClauses: string[] = [];
   const binds: string[] = [];
 
-  traverse(obj, (path, value) => {
-    const pathString = path.reduce(
-      (p, c) => (typeof c === "number" ? `${p}[${c}]` : `${p}.${c}`),
-      "$"
-    );
-    whereClauses.push(`json_extract(filter, '${pathString}') = ?`);
-    binds.push(value);
-  });
+  whereClauses[0] = `json_patch(?1, filter) = ?1`;
+  binds[0] = `'${JSON.stringify(obj)}'`;
+  // traverse(obj, (path, value) => {
+  //   const pathString = path.reduce(
+  //     (p, c) => (typeof c === "number" ? `${p}[${c}]` : `${p}.${c}`),
+  //     "$"
+  //   );
+  //   whereClauses.push(`json_extract(filter, '${pathString}') = ?`);
+  //   binds.push(value);
+  // });
 
   return { whereClauses, binds };
 };
@@ -35,12 +37,11 @@ const getQuerySubscriptionsSql = (
   topic: string,
   filter: any
 ) => {
-  const { whereClauses, binds } = filterObjectToSqliteClauses(filter);
-  const allWhereClauses = [`topic = ?`, ...whereClauses];
+  const allWhereClauses = [`topic = ?1`, `json_patch(?2, filter) = ?2`];
 
   return {
-    sql: `SELECT * FROM ${dbName} WHERE ${allWhereClauses.join(" AND ")}`,
-    binds: [topic, ...binds],
+    sql: `SELECT * FROM ${dbName} WHERE ${allWhereClauses.join(" AND ")};`,
+    binds: [topic, JSON.stringify(filter)],
   };
 };
 
@@ -51,6 +52,9 @@ export const querySubscriptions = (
   filter: any
 ) => {
   const { sql, binds } = getQuerySubscriptionsSql(dbName, topic, filter);
+
+  console.log(sql);
+  console.log(binds);
 
   return db
     .prepare(sql)

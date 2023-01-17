@@ -10,7 +10,7 @@ export const publish =
     schema: GraphQLSchema,
     graphqlContext: any
   ) =>
-  async (event: any) => {
+  async (event: { topic: string; payload?: any }) => {
     const { results } = await querySubscriptions(
       SUBSCRIPTIONS_DB,
       "Subscriptions",
