@@ -1,6 +1,6 @@
 import { createYoga } from "graphql-yoga";
-import { handleSubscriptions } from "./";
-import { createWsConnectionClass } from "./";
+import { handleSubscriptions } from "..";
+import { createWsConnectionClass } from "..";
 import { schema } from "./graphql/schema";
 
 export interface ENV {

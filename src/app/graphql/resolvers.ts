@@ -1,4 +1,4 @@
-import { createFakeSubIterator } from "../utils/createFakeSubIterator";
+import { createFakeSubIterator } from "../../utils/createFakeSubIterator";
 
 export const resolvers = {
   Query: {
