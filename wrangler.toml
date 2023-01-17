@@ -1,10 +1,9 @@
 account_id = "d500fa18c226aa3c452dac85ef7de1a5"
 compatibility_date = "2022-02-21"
 compatibility_flags = ["streams_enable_constructors"]
-main = "src/index.ts"
+main = 'src/app.ts'
 name = "my-worker-dev"
 workers_dev = true
-
 [[migrations]]
 new_classes = ["WsConnection"]
 tag = "v1"

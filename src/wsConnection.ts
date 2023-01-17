@@ -2,33 +2,23 @@ import { GraphQLSchema } from "graphql";
 import { handleProtocols } from "graphql-ws";
 import { useWebsocket } from "./useWebsocket";
 
-export function createWsConnection(
+export function createWsConnectionClass<Env extends {} = {}>(
   schema: GraphQLSchema,
-  getSubscriptionsDB: (env: any) => D1Database = (env) =>
+  getSubscriptionsDB: (env: Env) => D1Database = (env: any) =>
     env["SUBSCRIPTIONS_DB"]
-) {
+): { new (state: DurableObjectState, env: Env): DurableObject } {
   return class WsConnection implements DurableObject {
     private server: WebSocket | undefined;
-    // private SUBSCRIPTIONS_DB: D1Database | undefined;
-    constructor(private state: DurableObjectState, private env: any) {
-      // if there is a D1Database prefix, assign it to the original key too
-      //   const defaultToD1BetaPrefix = (namespace: keyof ENV) => {
-      //     const d1BetaPrefix = "__D1_BETA__";
-      //     return env[namespace] || (env as any)[d1BetaPrefix + namespace].prepare
-      //       ? (env as any)[d1BetaPrefix + namespace]
-      //       : new D1Database((env as any)[d1BetaPrefix + namespace]);
-      //   };
-      const _env = { ...env };
+    constructor(private state: DurableObjectState, private env: Env) {
+      const _env: any = { ...env };
       const prefix = "__D1_BETA__";
       for (const k in env) {
         if (k.startsWith(prefix)) {
           _env[k.slice(prefix.length)] = _env[k];
         }
       }
-      this.env = _env;
+      this.env = _env as Env;
       this.state = state;
-
-      //   this.SUBSCRIPTIONS_DB = getSubscriptionsDB(_env);
     }
     async fetch(request: Request) {
       const path = new URL(request.url).pathname;

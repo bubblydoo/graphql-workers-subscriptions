@@ -1,12 +1,16 @@
 import { GraphQLSchema } from "graphql";
 import { publish } from "./pubsub/publish";
 
-export function handleSubscriptions<T extends ExportedHandlerFetchHandler<any>>(
+export function handleSubscriptions<
+  Env extends {} = {},
+  T extends ExportedHandlerFetchHandler<Env> = any
+>(
   fetch: T,
   schema: GraphQLSchema,
-  getWSConnectionDO: (env: any) => DurableObjectNamespace = (env) =>
+  getWSConnectionDO: (env: Env) => DurableObjectNamespace = (env: any) =>
     env.WS_CONNECTION,
-  getSubscriptionsDB: (env: any) => D1Database = (env) => env.SUBSCRIPTIONS_DB
+  getSubscriptionsDB: (env: Env) => D1Database = (env: any) =>
+    env.SUBSCRIPTIONS_DB
 ): T {
   const wrappedFetch = (async (request, env, context) => {
     const WS_CONNECTION = getWSConnectionDO(env);
