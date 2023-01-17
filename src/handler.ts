@@ -1,14 +1,6 @@
 import { GraphQLSchema } from "graphql";
 import { publish } from "./pubsub/publish";
 
-interface Options<Env, T> {
-  fetch: T;
-  schema: GraphQLSchema;
-  getWSConnectionDO: (env: Env) => DurableObjectNamespace;
-  getSubscriptionsDB: (env: Env) => D1Database;
-  publishPathName: string;
-  wsConnectPathName: string;
-}
 export function handleSubscriptions<
   Env extends {} = {},
   T extends ExportedHandlerFetchHandler<Env> = any
