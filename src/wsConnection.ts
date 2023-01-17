@@ -1,10 +1,12 @@
 import { GraphQLSchema } from "graphql";
 import { handleProtocols } from "graphql-ws";
+import { SetGraphqlContextCallBack } from "./types";
 import { useWebsocket } from "./useWebsocket";
 
 export function createWsConnectionClass<Env extends {} = {}>(
   schema: GraphQLSchema,
-  getSubscriptionsDB: (env: Env) => D1Database
+  getSubscriptionsDB: (env: Env) => D1Database,
+  setGraphqlContext?: SetGraphqlContextCallBack<Env>
 ): { new (state: DurableObjectState, env: Env): DurableObject } {
   return class WsConnection implements DurableObject {
     private server: WebSocket | undefined;
@@ -32,13 +34,15 @@ export function createWsConnectionClass<Env extends {} = {}>(
             request.headers.get("Sec-WebSocket-Protocol")!
           );
 
-          await useWebsocket(
+          await useWebsocket<Env>(
             server,
             request,
             protocol,
             schema,
             getSubscriptionsDB(this.env),
-            this.state
+            this.state,
+            this.env,
+            setGraphqlContext
           );
           return new Response(null, {
             status: 101,

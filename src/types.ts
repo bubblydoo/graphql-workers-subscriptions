@@ -226,6 +226,11 @@ export interface PubSubEvent {
   payload: Record<string, any>;
 }
 
+export type SetGraphqlContextCallBack<Env extends {} = {}> = (
+  request: Request,
+  env: Env,
+  executionContext?: ExecutionContext
+) => Promise<any>;
 // export type MessageHandler<T> = (arg: {
 //   server: ServerClosure;
 //   event: APIGatewayWebSocketEvent;
