@@ -4,10 +4,11 @@ import { GraphQLSchema, parse, execute } from "graphql";
 import { MessageType, NextMessage } from "graphql-ws";
 
 export const publish =
-  (
+  <Env extends {} = {}>(
     WS_CONNECTION: DurableObjectNamespace,
     SUBSCRIPTIONS_DB: D1Database,
-    schema: GraphQLSchema
+    schema: GraphQLSchema,
+    graphqlContext: any
   ) =>
   async (event: any) => {
     const { results } = await querySubscriptions(
@@ -26,7 +27,7 @@ export const publish =
           ? JSON.parse(res.subscription)
           : undefined,
     })) as Subscription[];
-    
+
     // promises of sent subscription messages
     const iters = subscriptions.map(async (sub) => {
       // execution of subscription with payload as the root (can be modified within the resolve callback defined in schema)
@@ -35,11 +36,7 @@ export const publish =
         schema: schema,
         document: parse(sub.subscription.query),
         rootValue: event.payload,
-        // contextValue: await buildContext({
-        //   server,
-        //   connectionInitPayload: sub.connectionInitPayload,
-        //   connectionId: sub.connectionId,
-        // }),
+        contextValue: graphqlContext,
         variableValues: sub.subscription.variables,
         operationName: sub.subscription.operationName,
       });

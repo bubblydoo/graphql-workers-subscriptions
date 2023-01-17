@@ -18,7 +18,10 @@ export function handleSubscriptions<
   getWSConnectionDO,
   getSubscriptionsDB,
   isAuthorized,
-  createContext = (request, env, executionCtx) => ({ env, executionCtx }),
+  createContext = (request, env, executionCtx, requestBody) => ({
+    env,
+    executionCtx,
+  }),
   publishPathName = "/publish",
   wsConnectPathName = "/ws",
 }: {
@@ -34,7 +37,8 @@ export function handleSubscriptions<
   createContext?: (
     request: Request,
     env: Env,
-    executionCtx: ExecutionContext
+    executionCtx: ExecutionContext,
+    requestBody: any
   ) => any;
   publishPathName?: string;
   wsConnectPathName?: string;
@@ -56,14 +60,19 @@ export function handleSubscriptions<
       const reqBody: { topic: string; payload?: any } = await request.json();
       if (!reqBody.topic)
         return new Response("missing_topic_from_request", { status: 400 });
-      const p = publish(WS_CONNECTION, SUBSCRIPTIONS_DB, schema);
+      const p = publish(
+        WS_CONNECTION,
+        SUBSCRIPTIONS_DB,
+        schema,
+        createContext(request, env, executionCtx, reqBody)
+      );
       executionCtx.waitUntil(p(reqBody));
 
       return new Response("ok");
     } else if (path === wsConnectPathName && upgradeHeader === "websocket") {
       const subId = WS_CONNECTION.newUniqueId();
       const stub = WS_CONNECTION.get(subId);
-      return stub.fetch("https://websocket.io/connect", request.clone());
+      return stub.fetch("https://websocket.io/connect", request);
     }
 
     if (typeof fetch === "function") {
