@@ -7,11 +7,10 @@ import {
 import { getResolverAndArgs } from "../utils/getResolverAndArgs";
 import { GraphQLSchema } from "graphql";
 
-export const subscribe = (
+export const subscribe = async (
   connectionId: string,
   schema: GraphQLSchema,
   data: any,
-  state: DurableObjectState,
   SUBSCRIPTIONS_DB: D1Database
 ) => {
   // extract subscriptoin related values based on schema
@@ -36,22 +35,21 @@ export const subscribe = (
     typeof filter === "function" ? filter(root, args, context, info) : filter;
 
   // write subscription to D1
-  state.waitUntil(
-    SUBSCRIPTIONS_DB.prepare(
-      "INSERT INTO Subscriptions(id,connectionId, subscription, topic, filter) VALUES(?,?,?,?,?);"
+
+  await SUBSCRIPTIONS_DB.prepare(
+    "INSERT INTO Subscriptions(id,connectionId, subscription, topic, filter) VALUES(?,?,?,?,?);"
+  )
+    .bind(
+      data.id,
+      connectionId,
+      JSON.stringify({
+        query: data.payload.query,
+        variables: data.payload.variables,
+        operationName: data.payload.operationName,
+      }),
+      topic,
+      JSON.stringify(filterData)
     )
-      .bind(
-        data.id,
-        connectionId,
-        JSON.stringify({
-          query: data.payload.query,
-          variables: data.payload.variables,
-          operationName: data.payload.operationName,
-        }),
-        topic,
-        JSON.stringify(filterData)
-      )
-      .run()
-      .then()
-  );
+    .run()
+    .then();
 };

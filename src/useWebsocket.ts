@@ -70,7 +70,7 @@ export async function useWebsocket(
 
             if (data.type === "subscribe") {
               // handle subscribe with specific handler
-              subscribe(connectionId, schema, data, state, SUBSCRIPTIONS_DB);
+              await subscribe(connectionId, schema, data, SUBSCRIPTIONS_DB);
             } else {
               // or just use default handler
               cb(JSON.stringify(data));
@@ -88,19 +88,19 @@ export async function useWebsocket(
   );
 
   // notify server that the socket closed and stop the pinger
-  socket.addEventListener("close", ((code: number, reason: any) => {
+  socket.addEventListener("close", (async (code: number, reason: any) => {
     clearTimeout(pongWait);
     clearInterval(pinger);
 
     // this callback is called whenever the socket closes, so deleting from D1 only here is enough
-    state.waitUntil(
-      SUBSCRIPTIONS_DB.prepare(
-        "DELETE FROM Subscriptions WHERE connectionId = ? ;"
-      )
-        .bind(connectionId)
-        .run()
-        .then() // to return empty promise
-    );
+
+    await SUBSCRIPTIONS_DB.prepare(
+      "DELETE FROM Subscriptions WHERE connectionId = ? ;"
+    )
+      .bind(connectionId)
+      .run()
+      .then(); // to return empty promise
+
     callOnClosed(code, reason);
   }) as any);
 }
