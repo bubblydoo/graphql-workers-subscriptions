@@ -2,6 +2,7 @@ import { GraphQLSchema } from "graphql";
 import { handleProtocols } from "graphql-ws";
 import { SetGraphqlContextCallBack } from "./types";
 import { useWebsocket } from "./useWebsocket";
+import { D1Database as D1DatabaseClass } from "./utils/D1Database";
 
 export function createWsConnectionClass<Env extends {} = {}>(
   schema: GraphQLSchema,
@@ -15,7 +16,7 @@ export function createWsConnectionClass<Env extends {} = {}>(
       const prefix = "__D1_BETA__";
       for (const k in env) {
         if (k.startsWith(prefix)) {
-          _env[k.slice(prefix.length)] = _env[k];
+          _env[k.slice(prefix.length)] = _env[k].prepare ? _env[k] : new D1DatabaseClass(_env[k]);
         }
       }
       this.env = _env as Env;
