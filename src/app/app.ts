@@ -16,12 +16,12 @@ const yoga = createYoga({
   },
 });
 
-const fetch = handleSubscriptions<ENV>(
-  yoga.fetch,
+const fetch = handleSubscriptions<ENV>({
+  fetch: yoga.fetch,
   schema,
-  (env) => env.WS_CONNECTION,
-  (env) => env.SUBSCRIPTIONS_DEV
-);
+  getWSConnectionDO: (env) => env.WS_CONNECTION,
+  getSubscriptionsDB: (env) => env.SUBSCRIPTIONS_DEV,
+});
 
 export default { fetch };
 

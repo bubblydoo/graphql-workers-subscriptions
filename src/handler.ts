@@ -1,40 +1,75 @@
 import { GraphQLSchema } from "graphql";
 import { publish } from "./pubsub/publish";
 
+interface Options<Env, T> {
+  fetch: T;
+  schema: GraphQLSchema;
+  getWSConnectionDO: (env: Env) => DurableObjectNamespace;
+  getSubscriptionsDB: (env: Env) => D1Database;
+  publishPathName: string;
+  wsConnectPathName: string;
+}
 export function handleSubscriptions<
   Env extends {} = {},
   T extends ExportedHandlerFetchHandler<Env> = any
->(
-  fetch: T,
-  schema: GraphQLSchema,
-  getWSConnectionDO: (env: Env) => DurableObjectNamespace,
-  getSubscriptionsDB: (env: Env) => D1Database
-): T {
-  const wrappedFetch = (async (request, env, context) => {
+>({
+  fetch,
+  schema,
+  getWSConnectionDO,
+  getSubscriptionsDB,
+  isAuthorized,
+  createContext = (request, env, executionCtx) => ({ env, executionCtx }),
+  publishPathName = "/publish",
+  wsConnectPathName = "/ws",
+}: {
+  fetch?: T;
+  schema: GraphQLSchema;
+  getWSConnectionDO: (env: Env) => DurableObjectNamespace;
+  getSubscriptionsDB: (env: Env) => D1Database;
+  isAuthorized?: (
+    request: Request,
+    env: Env,
+    executionCtx: ExecutionContext
+  ) => boolean | Promise<boolean>;
+  createContext?: (
+    request: Request,
+    env: Env,
+    executionCtx: ExecutionContext
+  ) => any;
+  publishPathName?: string;
+  wsConnectPathName?: string;
+}): T {
+  const wrappedFetch = (async (request, env, executionCtx) => {
+    const authorized =
+      typeof isAuthorized === "function"
+        ? await isAuthorized(request.clone(), env, executionCtx)
+        : true;
+    if (!authorized) return new Response("unauthorized", { status: 400 });
+
     const WS_CONNECTION = getWSConnectionDO(env);
     const SUBSCRIPTIONS_DB = getSubscriptionsDB(env);
 
     const upgradeHeader = request.headers.get("Upgrade");
     const path = new URL(request.url).pathname;
 
-    // non ws requests
-    if (upgradeHeader !== "websocket") {
-      if (path === "/api") {
-        const query = SUBSCRIPTIONS_DB.prepare(`SELECT * FROM Subscriptions`);
-        const result = await query.all();
-        return new Response(JSON.stringify(result.results));
-      } else if (path === "/publish") {
-        const p = publish(WS_CONNECTION, SUBSCRIPTIONS_DB, schema);
-        context.waitUntil(p(await request.json()));
-        return new Response("ok");
-      }
+    if (path === publishPathName && request.method === "POST") {
+      const reqBody: { topic: string; payload?: any } = await request.json();
+      if (!reqBody.topic)
+        return new Response("missing_topic_from_request", { status: 400 });
+      const p = publish(WS_CONNECTION, SUBSCRIPTIONS_DB, schema);
+      executionCtx.waitUntil(p(reqBody));
 
-      return fetch(request, env, context);
+      return new Response("ok");
+    } else if (path === wsConnectPathName && upgradeHeader === "websocket") {
+      const subId = WS_CONNECTION.newUniqueId();
+      const stub = WS_CONNECTION.get(subId);
+      return stub.fetch("https://websocket.io/connect", request.clone());
     }
-    // ws request forwarded to a durable object
-    const subId = WS_CONNECTION.newUniqueId();
-    const stub = WS_CONNECTION.get(subId);
-    return stub.fetch("https://websocket.io/connect", request.clone());
+
+    if (typeof fetch === "function") {
+      return await fetch(request, env, executionCtx);
+    }
+    return new Response("not_found", { status: 404 });
   }) as T;
   return wrappedFetch;
 }
