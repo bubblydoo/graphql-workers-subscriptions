@@ -4,8 +4,7 @@ import { useWebsocket } from "./useWebsocket";
 
 export function createWsConnectionClass<Env extends {} = {}>(
   schema: GraphQLSchema,
-  getSubscriptionsDB: (env: Env) => D1Database = (env: any) =>
-    env["SUBSCRIPTIONS_DB"]
+  getSubscriptionsDB: (env: Env) => D1Database
 ): { new (state: DurableObjectState, env: Env): DurableObject } {
   return class WsConnection implements DurableObject {
     private server: WebSocket | undefined;

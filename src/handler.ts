@@ -7,10 +7,8 @@ export function handleSubscriptions<
 >(
   fetch: T,
   schema: GraphQLSchema,
-  getWSConnectionDO: (env: Env) => DurableObjectNamespace = (env: any) =>
-    env.WS_CONNECTION,
-  getSubscriptionsDB: (env: Env) => D1Database = (env: any) =>
-    env.SUBSCRIPTIONS_DB
+  getWSConnectionDO: (env: Env) => DurableObjectNamespace,
+  getSubscriptionsDB: (env: Env) => D1Database
 ): T {
   const wrappedFetch = (async (request, env, context) => {
     const WS_CONNECTION = getWSConnectionDO(env);

@@ -19,7 +19,7 @@ const yoga = createYoga({
 const fetch = handleSubscriptions<ENV>(
   yoga.fetch,
   schema,
-  undefined,
+  (env) => env.WS_CONNECTION,
   (env) => env.SUBSCRIPTIONS_DEV
 );
 
