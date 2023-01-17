@@ -4,7 +4,8 @@ compatibility_flags = ["streams_enable_constructors"]
 main = "dist-app/app.js"
 name = "graphql-worker-subscriptions"
 workers_dev = true
-
+[build]
+command = 'yarn build-app'
 [[migrations]]
 new_classes = ["WsConnection"]
 tag = "v1"
