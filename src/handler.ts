@@ -23,7 +23,7 @@ export function handleSubscriptions<
     executionCtx,
   }),
   publishPathName = "/publish",
-  wsConnectPathName = "/ws",
+  wsConnectPathName = "/graphql",
 }: {
   fetch?: T;
   schema: GraphQLSchema;

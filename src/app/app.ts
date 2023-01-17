@@ -1,19 +1,63 @@
+import { makeExecutableSchema } from "@graphql-tools/schema";
 import { createYoga } from "graphql-yoga";
-import { handleSubscriptions } from "..";
-import { createWsConnectionClass } from "..";
-import { schema } from "./graphql/schema";
+import {
+  handleSubscriptions,
+  createWsConnectionClass,
+  subscribe,
+  DefaultPublishableContext,
+  createDefaultPublishableContext,
+} from "..";
 
 export interface ENV {
   WS_CONNECTION: DurableObjectNamespace;
   SUBSCRIPTIONS_DEV: D1Database;
 }
 
-const yoga = createYoga({
+export const schema = makeExecutableSchema<DefaultPublishableContext<ENV>>({
+  typeDefs: /* GraphQL */ `
+    type Greeting {
+      greeting: String
+    }
+    type Subscription {
+      greetings(greeting: String): Greeting
+    }
+    type Mutation {
+      greet(greeting: String): String
+    }
+  `,
+  resolvers: {
+    Mutation: {
+      greet: (root, args, context) => {
+        context.publish("LIST_GREETINGS", { greeting: args.greeting });
+        return "ok";
+      }
+    },
+    Subscription: {
+      greetings: {
+        subscribe: subscribe("LIST_GREETINGS", {
+          filter: (root, args, context, info) => {
+            return args.greeting ? { greeting: args.greeting } : {};
+          },
+        }),
+      },
+    },
+  },
+});
+
+const yoga = createYoga<ENV & ExecutionContext>({
   schema,
   graphiql: {
     // Use WebSockets in GraphiQL
     subscriptionsProtocol: "WS",
   },
+  context: (env) =>
+    createDefaultPublishableContext({
+      env,
+      executionCtx: env,
+      schema,
+      getWSConnectionDO: (env) => env.WS_CONNECTION,
+      getSubscriptionsDB: (env) => env.SUBSCRIPTIONS_DEV,
+    }),
 });
 
 const fetch = handleSubscriptions<ENV>({

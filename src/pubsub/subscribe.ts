@@ -28,7 +28,7 @@ export const subscribe = async (
     throw new Error("No field");
   }
 
-  const { topic, filter, onSubscribe, onAfterSubscribe } =
+  const { topic, filter } =
     field.subscribe as SubscribePseudoIterable<PubSubEvent>;
   // execute filter callback if defined (return filter data saved to D1)
   const filterData =
