@@ -1,8 +1,7 @@
 {
   "name": "graphql-workers-subscriptions",
-  "description": "Fully-featured, simple to set up, performant and extendable GraphQL server",
-  "version": "0.0.0",
-  "private": true,
+  "description": "Cloudflare Workers Topic-based GraphQL Subscriptions",
+  "version": "0.0.1",
   "type": "module",
   "license": "MIT",
   "main": "./dist/index.js",
@@ -15,7 +14,8 @@
     "start": "wrangler dev",
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "check": "tsc --pretty --noEmit",
-    "build-app": "esbuild src/app/app.ts --bundle --format=esm --outfile=dist-app/app.js --resolve-extensions=.mts,.mjs,.ts,.js,.json"
+    "build-app": "esbuild src/app/app.ts --bundle --format=esm --outfile=dist-app/app.js --resolve-extensions=.mts,.mjs,.ts,.js,.json",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@graphql-tools/schema": "^9.0.13",
