@@ -143,6 +143,25 @@ curl -X POST https://graphql-worker-subscriptions.bubblydoo.workers.dev/publish 
 
 To disable this, pass `isAuthorized: () => false` to `handleSubscriptions`, or add custom authorization logic there.
 
+### Internal details
+
+Subscriptions are stored inside D1.
+
+The D1 database has 4 columns:
+- connectionId (a Durable Object id, a string)
+- subscription (the query the subscriber has requested, a JSON string)
+- topic (a string)
+- filter (the filter against which payloads are checked, a JSON string or null)
+
+The Durable Object has a reference to the WebSocket, which can then be used to publish data to.
+
+Filters are compared in-database using:
+
+```sql
+SELECT * FROM Subscriptions WHERE topic = ?1 AND (filter is null OR json_patch(?2, filter) = ?2);
+```
+with `?1: topic and ?2: payload`.
+
 ### Contributing
 
 Check out this repo, then run:
