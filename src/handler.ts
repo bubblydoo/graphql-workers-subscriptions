@@ -8,16 +8,16 @@ export function handleSubscriptions<
 >({
   fetch,
   schema,
-  wsConnection: getWSConnectionDO,
-  subscriptionsDb: getSubscriptionsDB,
+  wsConnection,
+  subscriptionsDb,
   isAuthorized,
   context: createContext = (request, env, executionCtx, requestBody) =>
     createDefaultPublishableContext({
       env,
       executionCtx,
       schema,
-      wsConnection: getWSConnectionDO,
-      subscriptionsDb: getSubscriptionsDB,
+      wsConnection,
+      subscriptionsDb,
     }),
   publishPathName = "/publish",
   wsConnectPathName = "/graphql",
@@ -47,8 +47,8 @@ export function handleSubscriptions<
         : true;
     if (!authorized) return new Response("unauthorized", { status: 400 });
 
-    const WS_CONNECTION = getWSConnectionDO(env);
-    const SUBSCRIPTIONS_DB = getSubscriptionsDB(env);
+    const WS_CONNECTION = wsConnection(env);
+    const SUBSCRIPTIONS_DB = subscriptionsDb(env);
 
     const upgradeHeader = request.headers.get("Upgrade");
     const path = new URL(request.url).pathname;

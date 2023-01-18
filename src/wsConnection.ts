@@ -13,14 +13,14 @@ type ConstructableDurableObject<Env> = {
 export function createWsConnectionClass<Env extends {} = {}>(
   {
     schema,
-    subscriptionsDb: getSubscriptionsDB,
-    wsConnection: getWSConnectionDO,
+    subscriptionsDb,
+    wsConnection,
     context = (req, env) =>
       createDefaultPublishableContext<Env, undefined>({
         env,
         executionCtx: undefined,
-        subscriptionsDb: getSubscriptionsDB,
-        wsConnection: getWSConnectionDO,
+        subscriptionsDb,
+        wsConnection,
         schema,
       })
   }: {
@@ -54,7 +54,7 @@ export function createWsConnectionClass<Env extends {} = {}>(
             request,
             protocol,
             schema,
-            getSubscriptionsDB(this.env),
+            subscriptionsDb(this.env),
             this.state,
             this.env,
             context

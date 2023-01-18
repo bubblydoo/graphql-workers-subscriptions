@@ -22,8 +22,8 @@ export function createDefaultPublishableContext<Env extends {} = {}, TExecutionC
   env,
   executionCtx,
   schema,
-  wsConnection: getWSConnectionDO,
-  subscriptionsDb: getSubscriptionsDB,
+  wsConnection,
+  subscriptionsDb,
 }: {
   env: Env;
   executionCtx: TExecutionContext
@@ -36,8 +36,8 @@ export function createDefaultPublishableContext<Env extends {} = {}, TExecutionC
     executionCtx,
     publish: (topic, payload) => {
       const publishFn = createPublishFn(
-        getWSConnectionDO(env),
-        getSubscriptionsDB(env),
+        wsConnection(env),
+        subscriptionsDb(env),
         schema,
         publishableCtx
       );
