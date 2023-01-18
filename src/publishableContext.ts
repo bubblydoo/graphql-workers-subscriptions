@@ -18,7 +18,7 @@ export type DefaultPublishableContext<Env extends {} = {}, TExecutionContext = E
  * The context used to resolve the subscriptions on publish also has these 3 keys.
  * If you want to change the context, you will have to copy this function code.
  */
-export function createDefaultPublishableContext<Env extends {} = {}, TExecutionContext = ExecutionContext>({
+export function createDefaultPublishableContext<Env extends {} = {}, TExecutionContext extends ExecutionContext | undefined  = ExecutionContext>({
   env,
   executionCtx,
   schema,
@@ -42,7 +42,11 @@ export function createDefaultPublishableContext<Env extends {} = {}, TExecutionC
         publishableCtx
       );
 
-      return publishFn({ topic, payload });
+      const promise = publishFn({ topic, payload });
+
+      executionCtx?.waitUntil(promise);
+
+      return promise;
     },
   };
   return publishableCtx;
