@@ -34,8 +34,6 @@ export const schema = makeExecutableSchema<DefaultPublishableContext<ENV>>({
     },
     Mutation: {
       greet: async (root, args, context) => {
-        console.log("publishing");
-
         await context.publish("GREETINGS", {
           greetings: { greeting: args.greeting },
         });
@@ -45,7 +43,7 @@ export const schema = makeExecutableSchema<DefaultPublishableContext<ENV>>({
     Subscription: {
       greetings: {
         subscribe: subscribe("GREETINGS", {
-          filter: (root, args, context, info) => {
+          filter: (root, args) => {
             return args.greeting
               ? { greetings: { greeting: args.greeting } }
               : {};

@@ -46,7 +46,7 @@ export const schema = makeExecutableSchema<DefaultPublishableContext<ENV>>({
       ping: () => "pong"
     },
     Mutation: {
-      greet: async (root, args, context) => {
+      greet: async (root, args, context, info) => {
         await context.publish("GREETINGS", {
           greetings: { greeting: args.greeting },
         });
@@ -95,6 +95,7 @@ export const WsConnection = createWsConnectionClass(settings);
 ```
 
 ```toml
+# wrangler.toml
 [[migrations]]
 new_classes = ["WsConnection"]
 tag = "v1"
