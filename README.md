@@ -108,6 +108,9 @@ export const WsConnection = createWsConnectionClass(settings);
 new_classes = ["WsConnection"]
 tag = "v1"
 
+[build]
+command = 'yarn build-app'
+
 [[d1_databases]]
 binding = "SUBSCRIPTIONS"
 database_id = "877f1123-088e-43ed-8d4d-37e71c77157c" 
@@ -156,6 +159,7 @@ To disable this, pass `isAuthorized: () => false` to `handleSubscriptions`, or a
 Subscriptions are stored inside D1.
 
 The D1 database has 4 columns:
+- id (websocket message id that will be matched with the client-side subscription, a string)
 - connectionId (a Durable Object id, a string)
 - subscription (the query the subscriber has requested, a JSON string)
 - topic (a string)
@@ -176,8 +180,7 @@ Check out this repo, then run:
 
 ```shell
 yarn
-yarn build-app --watch
-# in another terminal
+# will run the custom build script defined in wrangler.toml
 wrangler dev
 ```
 
