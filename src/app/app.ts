@@ -59,10 +59,10 @@ const yoga = createYoga<ENV & ExecutionContext>({
     // Use WebSockets in GraphiQL
     subscriptionsProtocol: "WS",
   },
-  context: (env) =>
+  context: ({ waitUntil, passThroughOnException, ...env }) =>
     createDefaultPublishableContext({
       env,
-      executionCtx: env,
+      executionCtx: { waitUntil, passThroughOnException },
       schema,
       getWSConnectionDO: (env) => env.WS_CONNECTION,
       getSubscriptionsDB: (env) => env.SUBSCRIPTIONS_DEV,
