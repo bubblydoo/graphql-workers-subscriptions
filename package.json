@@ -31,7 +31,6 @@
     "graphiql": "^2.2.0",
     "graphql": "^16.6.0",
     "graphql-ws": "^5.11.2",
-    "graphql-yoga": "^3.3.0",
     "lodash": "^4.17.21"
   },
   "resolutions": {
