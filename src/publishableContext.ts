@@ -39,7 +39,8 @@ export function createDefaultPublishableContext<Env extends {} = {}, TExecutionC
         wsConnection(env),
         subscriptionsDb(env),
         schema,
-        publishableCtx
+        publishableCtx,
+        executionCtx
       );
 
       const promise = publishFn({ topic, payload });
