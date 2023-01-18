@@ -133,6 +133,16 @@ wrangler d1 migrations apply SUBSCRIPTIONS --local
 wrangler dev
 ```
 
+### Publishing from outside Cloudflare
+
+You can use `POST /publish` on your Worker to publish events.
+
+```shell
+curl -X POST https://graphql-worker-subscriptions.bubblydoo.workers.dev/publish -H 'Content-Type: application/json' -d '{"topic": "GREETINGS", "payload":{"greetings": {"greeting": "hi!"}}}'
+```
+
+To disable this, pass `isAuthorized: () => false` to `handleSubscriptions`, or add custom authorization logic there.
+
 ### Contributing
 
 Check out this repo, then run:
