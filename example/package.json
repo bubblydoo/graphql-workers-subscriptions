@@ -7,7 +7,7 @@
   "scripts": {
     "start": "wrangler dev",
     "check": "tsc --pretty --noEmit",
-    "build-app": "esbuild app/app.ts --bundle --format=esm --outfile=dist-app/app.js --resolve-extensions=.mts,.mjs,.ts,.js,.json",
+    "build": "esbuild app/app.ts --bundle --format=esm --outfile=dist/app.js ",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
