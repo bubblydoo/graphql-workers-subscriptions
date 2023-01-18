@@ -67,8 +67,8 @@ export function handleSubscriptions<
 
       return new Response("ok");
     } else if (path === wsConnectPathName && upgradeHeader === "websocket") {
-      const subId = WS_CONNECTION.newUniqueId();
-      const stub = WS_CONNECTION.get(subId);
+      const stubId = WS_CONNECTION.newUniqueId();
+      const stub = WS_CONNECTION.get(stubId);
       return stub.fetch("https://ws-connection-durable-object.internal/connect", request);
     }
 

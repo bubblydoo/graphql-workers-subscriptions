@@ -54,9 +54,9 @@ export const createPublishFn =
         payload,
       };
       // request to already existing DO
-      const DOId = WS_CONNECTION.idFromString(sub.connectionId);
-      const DO = WS_CONNECTION.get(DOId);
-      await DO.fetch("https://ws-connection-durable-object.internal/publish", {
+      const stubId = WS_CONNECTION.idFromString(sub.connectionId);
+      const stub = WS_CONNECTION.get(stubId);
+      await stub.fetch("https://ws-connection-durable-object.internal/publish", {
         method: "POST",
         body: JSON.stringify(message),
       });
