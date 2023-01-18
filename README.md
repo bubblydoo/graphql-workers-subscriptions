@@ -3,6 +3,7 @@
 This library uses Cloudflare Workers, Durable Objects and D1 to provide powerful topic-based GraphQL subscriptions.
 
 Features:
+
 - 👀 Easy to integrate with your existing GraphQL stack
 - 🙌 Almost no setup
 - 🔍 In-database JSON filtering
@@ -43,7 +44,7 @@ export const schema = makeExecutableSchema<DefaultPublishableContext<ENV>>({
   `,
   resolvers: {
     Query: {
-      ping: () => "pong"
+      ping: () => "pong",
     },
     Mutation: {
       greet: async (root, args, context, info) => {
@@ -113,10 +114,10 @@ command = 'yarn build-app'
 
 [[d1_databases]]
 binding = "SUBSCRIPTIONS"
-database_id = "877f1123-088e-43ed-8d4d-37e71c77157c" 
-database_name = "SUBSCRIPTIONS" 
+database_id = "877f1123-088e-43ed-8d4d-37e71c77157c"
+database_name = "SUBSCRIPTIONS"
 migrations_dir = "node_modules/graphql-worker-subscriptions/migrations"
-preview_database_id = "877f1123-088e-43ed-8d4d-37e71c77157c" 
+preview_database_id = "877f1123-088e-43ed-8d4d-37e71c77157c"
 
 [durable_objects]
 bindings = [{name = "WS_CONNECTION", class_name = "WsConnection"}]
@@ -159,6 +160,7 @@ To disable this, pass `isAuthorized: () => false` to `handleSubscriptions`, or a
 Subscriptions are stored inside D1.
 
 The D1 database has 4 columns:
+
 - id (websocket message id that will be matched with the client-side subscription, a string)
 - connectionId (a Durable Object id, a string)
 - subscription (the query the subscriber has requested, a JSON string)
@@ -172,6 +174,7 @@ Filters are compared in-database using:
 ```sql
 SELECT * FROM Subscriptions WHERE topic = ?1 AND (filter is null OR json_patch(?2, filter) = ?2);
 ```
+
 with `?1: topic and ?2: payload`.
 
 ### Contributing
@@ -197,3 +200,7 @@ Due to the dual package hazard in GraphQL (see [this issue](https://github.com/g
 This is because both the CJS and ESM version of `graphql` are loaded.
 
 In that case, you might have to bundle yourself. When using `esbuild`, the option `--resolve-extensions=.mts,.mjs,.ts,.js,.json` works. See the build-app script in package.json for an example.
+
+### Credits 🙏
+
+This project was inspired by [cloudflare-worker-graphql-ws-template](https://github.com/enisdenjo/cloudflare-worker-graphql-ws-template) and [subscriptionless](https://github.com/andyrichardson/subscriptionless).
