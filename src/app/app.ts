@@ -30,11 +30,11 @@ export const schema = makeExecutableSchema<DefaultPublishableContext<ENV>>({
   `,
   resolvers: {
     Query: {
-      ping: () => "pong"
+      ping: () => "pong",
     },
     Mutation: {
       greet: async (root, args, context) => {
-        await context.publish("GREETINGS", {
+        context.publish("GREETINGS", {
           greetings: { greeting: args.greeting },
         });
         return "ok";
@@ -60,7 +60,7 @@ const settings = {
   subscriptionsDb: (env: ENV) => env.SUBSCRIPTIONS_DEV,
 };
 
-const yoga = createYoga<ENV & ExecutionContext>({
+const yoga = createYoga<{ env: ENV; executionCtx: ExecutionContext }>({
   schema,
   graphiql: {
     // Use WebSockets in GraphiQL
@@ -79,17 +79,20 @@ subscription ListenToHi {
   greetings(greeting: "hi!") {
     greeting
   }
-}`
+}`,
   },
-  context: ({ waitUntil, passThroughOnException, ...env }) =>
+  context: ({ env, executionCtx }) =>
     createDefaultPublishableContext({
       env,
-      executionCtx: { waitUntil, passThroughOnException },
+      executionCtx,
       ...settings,
     }),
 });
 
-const fetch = handleSubscriptions({ fetch: yoga.fetch, ...settings });
+const baseFetch: ExportedHandlerFetchHandler<ENV> = (request, env, executionCtx) =>
+  yoga.handleRequest(request, { env, executionCtx });
+
+const fetch = handleSubscriptions({ fetch: baseFetch, ...settings });
 
 export default { fetch };
 

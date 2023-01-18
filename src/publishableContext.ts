@@ -5,7 +5,8 @@ export { handleSubscriptions } from "./handler";
 export { createWsConnectionClass } from "./wsConnection";
 export { createSubscriptionHandler as subscribe } from "./createSubscriptionHandler";
 
-export type ContextPublishFn = (topic: string, payload: any) => Promise<void>;
+/** Publish a payload to a topic. Automatically using waitUntil. */
+export type ContextPublishFn = (topic: string, payload: any) => void | Promise<void>;
 
 export type DefaultPublishableContext<Env extends {} = {}, TExecutionContext = ExecutionContext> = {
   env: Env;
@@ -39,15 +40,17 @@ export function createDefaultPublishableContext<Env extends {} = {}, TExecutionC
         wsConnection(env),
         subscriptionsDb(env),
         schema,
-        publishableCtx,
-        executionCtx
+        publishableCtx
       );
 
       const promise = publishFn({ topic, payload });
 
-      executionCtx?.waitUntil(promise);
+      // this would happen inside a Durable Object
+      if (!executionCtx) return promise;
 
-      return promise;
+      console.log(executionCtx.waitUntil.toString())
+      
+      executionCtx?.waitUntil(promise);
     },
   };
   return publishableCtx;

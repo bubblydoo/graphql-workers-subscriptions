@@ -14,11 +14,9 @@ export const createPublishFn =
     WS_CONNECTION: DurableObjectNamespace,
     SUBSCRIPTIONS_DB: D1Database,
     schema: GraphQLSchema,
-    graphqlContext: any,
-    executionCtx: ExecutionContext | undefined
+    graphqlContext: any
   ): PublishFn =>
   async (event: { topic: string; payload?: any }) => {
-    // we should be able to put this in event.waitUntil as well, but this doesn't seem to work yet
     const { results } = await querySubscriptions(
       SUBSCRIPTIONS_DB,
       "Subscriptions",
@@ -36,15 +34,13 @@ export const createPublishFn =
           : undefined,
     })) as Subscription[];
 
-    const promise = publishToConnections(
+    await publishToConnections(
       subscriptions,
       WS_CONNECTION,
       schema,
       event.payload,
       graphqlContext
     );
-
-    executionCtx?.waitUntil(promise) || (await promise);
   };
 
 async function publishToConnections(

@@ -62,7 +62,6 @@ export function handleSubscriptions<
         SUBSCRIPTIONS_DB,
         schema,
         createContext(request, env, executionCtx, reqBody),
-        executionCtx
       );
       executionCtx.waitUntil(publish(reqBody));
 
