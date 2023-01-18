@@ -6,7 +6,7 @@ import {
   subscribe,
   DefaultPublishableContext,
   createDefaultPublishableContext,
-} from "..";
+} from "graphql-workers-subscriptions";
 
 export interface ENV {
   WS_CONNECTION: DurableObjectNamespace;
