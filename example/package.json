@@ -1,6 +1,6 @@
 {
-  "name": "graphql-workers-subscriptions",
-  "description": "Cloudflare Workers Topic-based GraphQL Subscriptions",
+  "name": "graphql-workers-subscriptions-app",
+  "description": "Cloudflare Workers Topic-based GraphQL Subscriptions demo app",
   "version": "0.0.2",
   "type": "module",
   "license": "MIT",
