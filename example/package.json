@@ -4,12 +4,6 @@
   "version": "0.0.2",
   "type": "module",
   "license": "MIT",
-  "main": "./dist-app/index.js",
-  "exports": {
-    "require": "./dist/index.cjs",
-    "types": "./dist/index.d.ts",
-    "default": "./dist/index.js"
-  },
   "scripts": {
     "start": "wrangler dev",
     "check": "tsc --pretty --noEmit",
@@ -28,13 +22,8 @@
     "@cloudflare/workers-types": "^4.20221111.1",
     "esbuild": "^0.17.2",
     "esbuild-visualizer": "^0.4.0",
-    "tsup": "^6.5.0",
     "typescript": "^4.9.4",
     "wrangler": "^2.7.1"
   },
-  "files": [
-    "dist/**",
-    "migrations/*.sql"
-  ],
   "packageManager": "yarn@3.3.1"
 }
