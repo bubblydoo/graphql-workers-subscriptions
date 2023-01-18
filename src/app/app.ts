@@ -65,6 +65,21 @@ const yoga = createYoga<ENV & ExecutionContext>({
   graphiql: {
     // Use WebSockets in GraphiQL
     subscriptionsProtocol: "WS",
+    defaultQuery: `mutation Say {
+  greet(greeting: "hi!")
+}
+
+subscription Listen {
+  greetings {
+    greeting
+  }
+}
+
+subscription ListenToHi {
+  greetings(greeting: "hi!") {
+    greeting
+  }
+}`
   },
   context: ({ waitUntil, passThroughOnException, ...env }) =>
     createDefaultPublishableContext({
