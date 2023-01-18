@@ -14,9 +14,10 @@ import { PubSubEvent, SubscribeOptions, SubscribePseudoIterable } from "@/types"
  */
 export const createSubscriptionHandler = <
   TArgs = Record<string, any>,
+  TPayload extends Record<string, any> = Record<string, any>,
   TContext = any,
   TSource = any,
-  TEvent extends PubSubEvent = any,
+  TEvent extends PubSubEvent = { payload: TPayload, topic: string },
 >(
   topic: TEvent["topic"],
   options: SubscribeOptions<TEvent, TSource, TArgs, TContext> = {}
