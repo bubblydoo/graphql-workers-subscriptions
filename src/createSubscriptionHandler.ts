@@ -13,10 +13,10 @@ import { PubSubEvent, SubscribeOptions, SubscribePseudoIterable } from "@/types"
  * We can then later use `fn.topic` and `fn.filter` in `handleSubscriptions`
  */
 export const createSubscriptionHandler = <
-  TEvent extends PubSubEvent,
-  TSource = any,
   TArgs = Record<string, any>,
-  TContext = any
+  TContext = any,
+  TSource = any,
+  TEvent extends PubSubEvent = any,
 >(
   topic: TEvent["topic"],
   options: SubscribeOptions<TEvent, TSource, TArgs, TContext> = {}
