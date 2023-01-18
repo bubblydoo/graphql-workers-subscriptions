@@ -133,11 +133,21 @@ wrangler d1 migrations apply SUBSCRIPTIONS --local
 wrangler dev
 ```
 
-### Development
+### Contributing
+
+Check out this repo, then run:
 
 ```shell
 yarn
-yarn build-app
+yarn build-app --watch
+# in another terminal
+wrangler dev
+```
+
+Finally, run:
+
+```
+yarn build
 ```
 
 ### Bundling issue
