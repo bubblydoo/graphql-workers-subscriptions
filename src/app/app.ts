@@ -60,7 +60,7 @@ const settings = {
   subscriptionsDb: (env: ENV) => env.SUBSCRIPTIONS_DEV,
 };
 
-const yoga = createYoga<{ env: ENV; executionCtx: ExecutionContext }>({
+const yoga = createYoga<DefaultPublishableContext<ENV>>({
   schema,
   graphiql: {
     // Use WebSockets in GraphiQL
@@ -81,16 +81,21 @@ subscription ListenToHi {
   }
 }`,
   },
-  context: ({ env, executionCtx }) =>
+});
+
+const baseFetch: ExportedHandlerFetchHandler<ENV> = (
+  request,
+  env,
+  executionCtx
+) =>
+  yoga.handleRequest(
+    request,
     createDefaultPublishableContext({
       env,
       executionCtx,
       ...settings,
-    }),
-});
-
-const baseFetch: ExportedHandlerFetchHandler<ENV> = (request, env, executionCtx) =>
-  yoga.handleRequest(request, { env, executionCtx });
+    })
+  );
 
 const fetch = handleSubscriptions({ fetch: baseFetch, ...settings });
 
