@@ -7,7 +7,7 @@ import {
 import { getResolverAndArgs } from "../utils/getResolverAndArgs";
 import { GraphQLSchema } from "graphql";
 
-export const subscribe = async (
+export const createSubscription = async (
   connectionId: string,
   schema: GraphQLSchema,
   data: any,

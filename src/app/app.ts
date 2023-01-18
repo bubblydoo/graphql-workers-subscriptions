@@ -32,7 +32,7 @@ export const schema = makeExecutableSchema<DefaultPublishableContext<ENV>>({
     Mutation: {
       greet: async (root, args, context) => {
         console.log("publishing");
-
+        
         await context.publish("GREETINGS", {
           greetings: { greeting: args.greeting },
         });

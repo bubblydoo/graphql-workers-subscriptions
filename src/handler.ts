@@ -1,5 +1,5 @@
 import { GraphQLSchema } from "graphql";
-import { publish } from "./pubsub/publish";
+import { createPublishFn } from "./pubsub/publish";
 
 export function handleSubscriptions<
   Env extends {} = {},
@@ -52,7 +52,7 @@ export function handleSubscriptions<
       const reqBody: { topic: string; payload?: any } = await request.json();
       if (!reqBody.topic)
         return new Response("missing_topic_from_request", { status: 400 });
-      const p = publish(
+      const p = createPublishFn(
         WS_CONNECTION,
         SUBSCRIPTIONS_DB,
         schema,

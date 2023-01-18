@@ -6,7 +6,7 @@ import {
 } from "graphql-ws";
 import { GraphQLSchema } from "graphql";
 import type { WebSocket } from "@cloudflare/workers-types";
-import { subscribe } from "./pubsub/subscribe";
+import { createSubscription } from "./pubsub/subscribe";
 import { SetGraphqlContextCallBack } from "./types";
 
 // use cloudflare server websocket for graphql-ws
@@ -77,7 +77,7 @@ export async function useWebsocket<Env extends {} = {}>(
 
             if (data.type === "subscribe") {
               // handle subscribe with specific handler
-              await subscribe(connectionId, schema, data, SUBSCRIPTIONS_DB);
+              await createSubscription(connectionId, schema, data, SUBSCRIPTIONS_DB);
             } else {
               // or just use default handler
               cb(JSON.stringify(data));

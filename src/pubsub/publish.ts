@@ -3,8 +3,8 @@ import { querySubscriptions } from "@/utils/query-helpers";
 import { GraphQLSchema, parse, execute } from "graphql";
 import { MessageType, NextMessage } from "graphql-ws";
 
-export const publish =
-  <Env extends {} = {}>(
+export const createPublishFn =
+  (
     WS_CONNECTION: DurableObjectNamespace,
     SUBSCRIPTIONS_DB: D1Database,
     schema: GraphQLSchema,
