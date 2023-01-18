@@ -6,10 +6,14 @@ import {
 } from "graphql-ws";
 import { GraphQLSchema } from "graphql";
 import type { WebSocket } from "@cloudflare/workers-types";
-import { createSubscription } from "./pubsub/subscribe";
-import { SetGraphqlContextCallBack } from "./types";
+import { createSubscription } from "./createSubscription";
+import { CreateContextFn } from "./types";
 
-// use cloudflare server websocket for graphql-ws
+/**
+ * Accept and handle websocket connection with `graphql-ws`.
+ * 
+ * Handles messages, close, ping-pong
+ */
 export async function useWebsocket<Env extends {} = {}>(
   socket: WebSocket,
   request: Request,
@@ -18,14 +22,14 @@ export async function useWebsocket<Env extends {} = {}>(
   SUBSCRIPTIONS_DB: D1Database,
   state: DurableObjectState,
   env: Env,
-  setGraphqlContext?: SetGraphqlContextCallBack<Env>
+  createContext: CreateContextFn<Env, ExecutionContext | undefined>
 ) {
   // configure and make server
   const server = makeServer({
     schema,
     context:
-      typeof setGraphqlContext === "function"
-        ? await setGraphqlContext(request, env, undefined)
+      typeof createContext === "function"
+        ? await createContext(request, env, undefined)
         : undefined,
   });
 

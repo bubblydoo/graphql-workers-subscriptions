@@ -1,5 +1,6 @@
 import { GraphQLSchema } from "graphql";
-import { createPublishFn } from "./pubsub/publish";
+import { createPublishFn } from "./createPublishFn";
+import { createDefaultPublishableContext } from "./publishableContext";
 
 export function handleSubscriptions<
   Env extends {} = {},
@@ -7,26 +8,30 @@ export function handleSubscriptions<
 >({
   fetch,
   schema,
-  getWSConnectionDO,
-  getSubscriptionsDB,
+  wsConnection: getWSConnectionDO,
+  subscriptionsDb: getSubscriptionsDB,
   isAuthorized,
-  createContext = (request, env, executionCtx, requestBody) => ({
-    env,
-    executionCtx,
-  }),
+  context: createContext = (request, env, executionCtx, requestBody) =>
+    createDefaultPublishableContext({
+      env,
+      executionCtx,
+      schema,
+      wsConnection: getWSConnectionDO,
+      subscriptionsDb: getSubscriptionsDB,
+    }),
   publishPathName = "/publish",
   wsConnectPathName = "/graphql",
 }: {
   fetch?: T;
   schema: GraphQLSchema;
-  getWSConnectionDO: (env: Env) => DurableObjectNamespace;
-  getSubscriptionsDB: (env: Env) => D1Database;
+  wsConnection: (env: Env) => DurableObjectNamespace;
+  subscriptionsDb: (env: Env) => D1Database;
   isAuthorized?: (
     request: Request,
     env: Env,
     executionCtx: ExecutionContext
   ) => boolean | Promise<boolean>;
-  createContext?: (
+  context?: (
     request: Request,
     env: Env,
     executionCtx: ExecutionContext,
@@ -52,19 +57,19 @@ export function handleSubscriptions<
       const reqBody: { topic: string; payload?: any } = await request.json();
       if (!reqBody.topic)
         return new Response("missing_topic_from_request", { status: 400 });
-      const p = createPublishFn(
+      const publish = createPublishFn(
         WS_CONNECTION,
         SUBSCRIPTIONS_DB,
         schema,
         createContext(request, env, executionCtx, reqBody)
       );
-      executionCtx.waitUntil(p(reqBody));
+      executionCtx.waitUntil(publish(reqBody));
 
       return new Response("ok");
     } else if (path === wsConnectPathName && upgradeHeader === "websocket") {
       const subId = WS_CONNECTION.newUniqueId();
       const stub = WS_CONNECTION.get(subId);
-      return stub.fetch("https://websocket.io/connect", request);
+      return stub.fetch("https://ws-connection-durable-object.internal/connect", request);
     }
 
     if (typeof fetch === "function") {

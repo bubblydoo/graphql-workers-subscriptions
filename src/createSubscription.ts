@@ -1,19 +1,20 @@
 import { parse } from "graphql";
-import type { SubscribePseudoIterable, PubSubEvent } from "../types";
+import type { SubscribePseudoIterable, PubSubEvent } from "./types";
 import {
   buildExecutionContext,
   ExecutionContext,
 } from "graphql/execution/execute";
-import { getResolverAndArgs } from "../utils/getResolverAndArgs";
+import { getResolverAndArgs } from "./getResolverAndArgs";
 import { GraphQLSchema } from "graphql";
 
+/** Creates a subscription in the database */
 export const createSubscription = async (
   connectionId: string,
   schema: GraphQLSchema,
   data: any,
   SUBSCRIPTIONS_DB: D1Database
 ) => {
-  // extract subscriptoin related values based on schema
+  // extract subscription related values based on schema
   const execContext = buildExecutionContext({
     schema,
     document: parse(data.payload.query),
@@ -37,7 +38,7 @@ export const createSubscription = async (
   // write subscription to D1
 
   await SUBSCRIPTIONS_DB.prepare(
-    "INSERT INTO Subscriptions(id,connectionId, subscription, topic, filter) VALUES(?,?,?,?,?);"
+    "INSERT INTO Subscriptions(id, connectionId, subscription, topic, filter) VALUES(?,?,?,?,?);"
   )
     .bind(
       data.id,

@@ -19,7 +19,7 @@ export const schema = makeExecutableSchema<DefaultPublishableContext<ENV>>({
       greeting: String
     }
     type Query {
-      hello: String
+      ping: String
     }
     type Subscription {
       greetings(greeting: String): Greeting
@@ -29,10 +29,13 @@ export const schema = makeExecutableSchema<DefaultPublishableContext<ENV>>({
     }
   `,
   resolvers: {
+    Query: {
+      ping: () => "pong"
+    },
     Mutation: {
       greet: async (root, args, context) => {
         console.log("publishing");
-        
+
         await context.publish("GREETINGS", {
           greetings: { greeting: args.greeting },
         });
@@ -53,6 +56,12 @@ export const schema = makeExecutableSchema<DefaultPublishableContext<ENV>>({
   },
 });
 
+const settings = {
+  schema,
+  wsConnection: (env: ENV) => env.WS_CONNECTION,
+  subscriptionsDb: (env: ENV) => env.SUBSCRIPTIONS_DEV,
+};
+
 const yoga = createYoga<ENV & ExecutionContext>({
   schema,
   graphiql: {
@@ -63,22 +72,12 @@ const yoga = createYoga<ENV & ExecutionContext>({
     createDefaultPublishableContext({
       env,
       executionCtx: { waitUntil, passThroughOnException },
-      schema,
-      getWSConnectionDO: (env) => env.WS_CONNECTION,
-      getSubscriptionsDB: (env) => env.SUBSCRIPTIONS_DEV,
+      ...settings,
     }),
 });
 
-const fetch = handleSubscriptions<ENV>({
-  fetch: yoga.fetch,
-  schema,
-  getWSConnectionDO: (env) => env.WS_CONNECTION,
-  getSubscriptionsDB: (env) => env.SUBSCRIPTIONS_DEV,
-});
+const fetch = handleSubscriptions({ fetch: yoga.fetch, ...settings });
 
 export default { fetch };
 
-export const WsConnection = createWsConnectionClass<ENV>(
-  schema,
-  (env) => env.SUBSCRIPTIONS_DEV
-);
+export const WsConnection = createWsConnectionClass(settings);

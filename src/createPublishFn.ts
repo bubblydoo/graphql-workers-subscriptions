@@ -1,15 +1,21 @@
-import { Subscription } from "@/models/subscription";
-import { querySubscriptions } from "@/utils/query-helpers";
+import { Subscription } from "@/subscription";
+import { querySubscriptions } from "@/querySubscriptions";
 import { GraphQLSchema, parse, execute } from "graphql";
 import { MessageType, NextMessage } from "graphql-ws";
 
+type PublishFn = (event: { topic: string, payload?: any }) => Promise<void>;
+
+/**
+ * Creates a publish function that will query the database for applicable subscriptions,
+ * and publish to each of them
+ */
 export const createPublishFn =
   (
     WS_CONNECTION: DurableObjectNamespace,
     SUBSCRIPTIONS_DB: D1Database,
     schema: GraphQLSchema,
     graphqlContext: any
-  ) =>
+  ): PublishFn =>
   async (event: { topic: string; payload?: any }) => {
     const { results } = await querySubscriptions(
       SUBSCRIPTIONS_DB,
@@ -50,7 +56,7 @@ export const createPublishFn =
       // request to already existing DO
       const DOId = WS_CONNECTION.idFromString(sub.connectionId);
       const DO = WS_CONNECTION.get(DOId);
-      await DO.fetch("https://websocket.io/publish", {
+      await DO.fetch("https://ws-connection-durable-object.internal/publish", {
         method: "POST",
         body: JSON.stringify(message),
       });

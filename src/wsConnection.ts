@@ -1,26 +1,40 @@
 import { GraphQLSchema } from "graphql";
 import { handleProtocols } from "graphql-ws";
-import { SetGraphqlContextCallBack } from "./types";
+import { fixD1BetaEnv } from "./fixD1BetaEnv";
+import { createDefaultPublishableContext } from "./publishableContext";
+import { CreateContextFn } from "./types";
 import { useWebsocket } from "./useWebsocket";
-import { D1Database as D1DatabaseClass } from "./utils/D1Database";
 
+type ConstructableDurableObject<Env> = {
+  new (state: DurableObjectState, env: Env): DurableObject;
+};
+
+/** Creates a WsConnection DurableObject class */
 export function createWsConnectionClass<Env extends {} = {}>(
-  schema: GraphQLSchema,
-  getSubscriptionsDB: (env: Env) => D1Database,
-  setGraphqlContext?: SetGraphqlContextCallBack<Env>
-): { new (state: DurableObjectState, env: Env): DurableObject } {
+  {
+    schema,
+    subscriptionsDb: getSubscriptionsDB,
+    wsConnection: getWSConnectionDO,
+    context = (req, env) =>
+      createDefaultPublishableContext<Env, undefined>({
+        env,
+        executionCtx: undefined,
+        subscriptionsDb: getSubscriptionsDB,
+        wsConnection: getWSConnectionDO,
+        schema,
+      })
+  }: {
+    schema: GraphQLSchema,
+    subscriptionsDb: (env: Env) => D1Database,
+    wsConnection: (env: Env) => DurableObjectNamespace,
+    context?: CreateContextFn<Env, ExecutionContext | undefined>
+  }
+): ConstructableDurableObject<Env> {
   return class WsConnection implements DurableObject {
     private server: WebSocket | undefined;
-    constructor(private state: DurableObjectState, private env: Env) {
-      const _env: any = { ...env };
-      const prefix = "__D1_BETA__";
-      for (const k in env) {
-        if (k.startsWith(prefix)) {
-          _env[k.slice(prefix.length)] = _env[k].prepare ? _env[k] : new D1DatabaseClass(_env[k]);
-        }
-      }
-      this.env = _env as Env;
-      this.state = state;
+    private env: Env;
+    constructor(private state: DurableObjectState, env: Env) {
+      this.env = fixD1BetaEnv(env);
     }
     async fetch(request: Request) {
       const path = new URL(request.url).pathname;
@@ -43,7 +57,7 @@ export function createWsConnectionClass<Env extends {} = {}>(
             getSubscriptionsDB(this.env),
             this.state,
             this.env,
-            setGraphqlContext
+            context
           );
           return new Response(null, {
             status: 101,

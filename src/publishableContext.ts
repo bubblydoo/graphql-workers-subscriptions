@@ -1,33 +1,37 @@
-
 import { GraphQLSchema } from "graphql";
-import { createPublishFn } from "./pubsub/publish";
+import { createPublishFn } from "./createPublishFn";
 
 export { handleSubscriptions } from "./handler";
 export { createWsConnectionClass } from "./wsConnection";
-export { createFakeSubIterator as subscribe } from "./utils/createFakeSubIterator";
+export { createSubscriptionHandler as subscribe } from "./createSubscriptionHandler";
 
 export type ContextPublishFn = (topic: string, payload: any) => Promise<void>;
 
-export type DefaultPublishableContext<Env extends {} = {}> = {
+export type DefaultPublishableContext<Env extends {} = {}, TExecutionContext = ExecutionContext> = {
   env: Env;
-  executionCtx: ExecutionContext;
+  executionCtx: TExecutionContext;
   publish: ContextPublishFn;
 };
 
-export function createDefaultPublishableContext<Env extends {} = {}>({
+/**
+ * Creates a context with 3 keys: `env`, `executionCtx`, and `publish`.
+ * The context used to resolve the subscriptions on publish also has these 3 keys.
+ * If you want to change the context, you will have to copy this function code.
+ */
+export function createDefaultPublishableContext<Env extends {} = {}, TExecutionContext = ExecutionContext>({
   env,
   executionCtx,
   schema,
-  getWSConnectionDO,
-  getSubscriptionsDB,
+  wsConnection: getWSConnectionDO,
+  subscriptionsDb: getSubscriptionsDB,
 }: {
   env: Env;
-  executionCtx: ExecutionContext;
+  executionCtx: TExecutionContext
   schema: GraphQLSchema;
-  getWSConnectionDO: (env: Env) => DurableObjectNamespace;
-  getSubscriptionsDB: (env: Env) => D1Database;
+  wsConnection: (env: Env) => DurableObjectNamespace;
+  subscriptionsDb: (env: Env) => D1Database;
 }) {
-  const publishableCtx: DefaultPublishableContext<Env> = {
+  const publishableCtx: DefaultPublishableContext<Env, TExecutionContext> = {
     env,
     executionCtx,
     publish: (topic, payload) => {

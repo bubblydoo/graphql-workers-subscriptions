@@ -42,11 +42,11 @@ export interface PubSubEvent {
   payload: Record<string, any>;
 }
 
-export type SetGraphqlContextCallBack<Env extends {} = {}> = (
+export type CreateContextFn<Env extends {} = {}, TExecutionContext = ExecutionContext> = (
   request: Request,
   env: Env,
-  executionContext?: ExecutionContext
-) => Promise<any>;
+  executionContext: TExecutionContext
+) => MaybePromise<any>;
 
 export interface SubscribeOptions<
   // TSubscribeArgs extends SubscribeArgs = SubscribeArgs

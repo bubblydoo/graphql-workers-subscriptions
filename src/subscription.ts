@@ -1,4 +1,4 @@
-export interface Subscription{
+export interface Subscription {
   id: string;
   connectionId: string;
   filter?: any;

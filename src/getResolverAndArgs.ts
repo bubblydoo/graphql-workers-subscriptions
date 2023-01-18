@@ -22,6 +22,7 @@ export const getResolverAndArgs = ({
   execContext: ExecutionContext;
 }): ResolverAndArgs => {
   // Taken from graphql-js executeSubscription - https://github.com/graphql/graphql-js/blob/main/src/execution/subscribe.ts#L187
+  // TODO: update with https://github.dev/graphql/graphql-js/blob/8be83d8d528991aed04ca17434b7e26e56f649cf/src/execution/execute.ts#L1680
   const { schema, fragments, operation, variableValues, contextValue } =
     execContext;
 
