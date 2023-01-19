@@ -1549,12 +1549,32 @@ __metadata:
     esbuild: ^0.17.2
     esbuild-visualizer: ^0.4.0
     graphql: ^16.6.0
-    graphql-workers-subscriptions: ^0.0.2
+    graphql-workers-subscriptions: ^0.0.3
     graphql-yoga: ^3.3.0
     typescript: ^4.9.4
     wrangler: ^2.7.1
   languageName: unknown
   linkType: soft
+
+"graphql-workers-subscriptions@npm:^0.0.3":
+  version: 0.0.3
+  resolution: "graphql-workers-subscriptions@npm:0.0.3"
+  dependencies:
+    graphql: ^16.6.0
+    graphql-ws: ^5.11.2
+    lodash: ^4.17.21
+  checksum: c595a86debff3a61c8d7fe1b865f15e2adbe41011a2fbf42bdd669fb22cdb45cd7dc25d569fb6d4267556730b14b327018d28ac8c8f24caf38ea5ec6e986f047
+  languageName: node
+  linkType: hard
+
+"graphql-ws@npm:^5.11.2":
+  version: 5.11.2
+  resolution: "graphql-ws@npm:5.11.2"
+  peerDependencies:
+    graphql: ">=0.11 <=16"
+  checksum: 2c94b06c1919217dc15a0556474673de7aabcc7179a2982a87ded51856c105e4f4ee6d54a6c135a0a7f55d85a5997a6a15cff514959258885814adec6a61ff00
+  languageName: node
+  linkType: hard
 
 "graphql-yoga@npm:^3.3.0":
   version: 3.3.0
@@ -2601,11 +2621,11 @@ __metadata:
   linkType: hard
 
 "undici@npm:^5.12.0":
-  version: 5.15.0
-  resolution: "undici@npm:5.15.0"
+  version: 5.15.1
+  resolution: "undici@npm:5.15.1"
   dependencies:
     busboy: ^1.6.0
-  checksum: cdc03ceff8d2b76a5ae08dc48d0b9d44dcb970f6e89e8a3cfe7031b9351dd3c90b223c143565c153a5f1165cd573aae1b128e6b9f557b4af4eb36da337a2a345
+  checksum: 45ebf72b1c589ad00077923c1064312bc7a7afcdbbf8d1b4fd56de03e8a3e2daef2a22f37e4d0a0019120004c57e31879447b98b2fe1df32f4ce9508359cbeb9
   languageName: node
   linkType: hard
 
