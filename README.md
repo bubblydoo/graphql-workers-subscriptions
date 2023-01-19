@@ -110,7 +110,8 @@ new_classes = ["WsConnection"]
 tag = "v1"
 
 [build]
-command = 'yarn build-app'
+# your build script
+command = 'npm run build'
 
 [[d1_databases]]
 binding = "SUBSCRIPTIONS"
@@ -183,15 +184,11 @@ Check out this repo, then run:
 
 ```shell
 yarn
-# will run the custom build script defined in wrangler.toml
-wrangler dev
-```
 
-Finally, run:
-
-```
 yarn build
 ```
+
+Then link the package to your project (you can take the example as start).
 
 ### Bundling issue
 
