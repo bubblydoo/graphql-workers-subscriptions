@@ -1,11 +1,13 @@
 account_id = "d500fa18c226aa3c452dac85ef7de1a5"
 compatibility_date = "2022-02-21"
 compatibility_flags = ["streams_enable_constructors"]
-main = "dist-app/app.js"
+main = "dist/app.js"
 name = "graphql-worker-subscriptions"
 workers_dev = true
+
 [build]
-command = 'yarn build-app'
+command = "npm run build"
+
 [[migrations]]
 new_classes = ["WsConnection"]
 tag = "v1"
@@ -14,7 +16,7 @@ tag = "v1"
 binding = "SUBSCRIPTIONS_DEV" # i.e. available in your Worker on env.DB
 database_id = "cbcfa2b3-6731-44d1-8dee-74a9a964787d" 
 database_name = "SUBSCRIPTIONS_DEV" 
-migrations_dir = "migrations"
+migrations_dir = "node_modules/graphql-workers-subscriptions/migrations" 
 preview_database_id = "cbcfa2b3-6731-44d1-8dee-74a9a964787d" 
 
 [miniflare]
