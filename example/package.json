@@ -5,13 +5,14 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "start": "wrangler dev",
+    "start": "wrangler dev --local",
     "check": "tsc --pretty --noEmit",
-    "build": "esbuild app/app.ts --bundle --format=esm --outfile=dist/app.js ",
+    "build": "esbuild app/app.ts --bundle --format=esm --outfile=dist-app/app.js --resolve-extensions=.mts,.mjs,.ts,.js,.json",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@graphql-tools/schema": "^9.0.13",
+    "graphql": "^16.6.0",
     "graphql-workers-subscriptions": "^0.0.2",
     "graphql-yoga": "^3.3.0"
   },
