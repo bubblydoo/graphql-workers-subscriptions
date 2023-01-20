@@ -6,7 +6,7 @@ import {
 } from "graphql-ws";
 import { GraphQLSchema } from "graphql";
 import type { WebSocket } from "@cloudflare/workers-types";
-import { createSubscription } from "./createSubscription";
+import { createSubscription, deleteSubscription } from "./createSubscription";
 import { CreateContextFn } from "./types";
 
 /**
@@ -105,12 +105,7 @@ export async function useWebsocket<Env extends {} = {}>(
 
     // this callback is called whenever the socket closes, so deleting from D1 only here is enough
 
-    await SUBSCRIPTIONS_DB.prepare(
-      "DELETE FROM Subscriptions WHERE connectionId = ? ;"
-    )
-      .bind(connectionId)
-      .run()
-      .then(); // to return empty promise
+    await deleteSubscription(connectionId, SUBSCRIPTIONS_DB);
 
     callOnClosed(code, reason);
   }) as any);

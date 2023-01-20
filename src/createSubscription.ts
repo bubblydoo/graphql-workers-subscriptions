@@ -56,3 +56,11 @@ export const createSubscription = async (
     .run()
     .then();
 };
+
+export const deleteSubscription = async (connectionId: string, SUBSCRIPTIONS_DB: D1Database) => {
+  await SUBSCRIPTIONS_DB.prepare(
+    "DELETE FROM Subscriptions WHERE connectionId = ?;"
+  )
+    .bind(connectionId)
+    .run();
+}

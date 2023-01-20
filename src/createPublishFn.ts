@@ -2,6 +2,7 @@ import { Subscription } from "@/subscription";
 import { querySubscriptions } from "@/querySubscriptions";
 import { GraphQLSchema, parse, execute } from "graphql";
 import { MessageType, NextMessage } from "graphql-ws";
+import groupBy from "lodash/groupBy";
 
 type PublishFn = (event: { topic: string; payload?: any }) => Promise<void>;
 
@@ -50,33 +51,49 @@ async function publishToConnections(
   eventPayload: any,
   graphqlContext: any
 ) {
+  // group subscriptions by connection pool
+  const connectionPoolSubscriptionsMap = groupBy(
+    subscriptions,
+    (sub) => sub.connectionPoolId
+  );
   // promises of sent subscription messages
-  const promises = subscriptions.map(async (sub) => {
-    // execution of subscription with payload as the root (can be modified within the resolve callback defined in schema)
-    // will return the payload as is by default
-    const payload = await execute({
-      schema: schema,
-      document: parse(sub.subscription.query),
-      rootValue: eventPayload,
-      contextValue: graphqlContext,
-      variableValues: sub.subscription.variables,
-      operationName: sub.subscription.operationName,
-    });
+  const promises = Object.entries(connectionPoolSubscriptionsMap).map(
+    async ([connectionPoolId, subscriptions]) => {
+      const messagesAndConnectionIds = await Promise.all(
+        subscriptions.map(async (sub) => {
+          // execution of subscription with payload as the root (can be modified within the resolve callback defined in schema)
+          // will return the payload as is by default
+          const payload = await execute({
+            schema: schema,
+            document: parse(sub.subscription.query),
+            rootValue: eventPayload,
+            contextValue: graphqlContext,
+            variableValues: sub.subscription.variables,
+            operationName: sub.subscription.operationName,
+          });
 
-    // transform it into ws message (id is not specific to connection but to subscription)
-    const message: NextMessage = {
-      id: sub.id,
-      type: MessageType.Next,
-      payload,
-    };
-    // request to already existing DO
-    const stubId = WS_CONNECTION_POOL.idFromString(sub.connectionPoolId);
-    const stub = WS_CONNECTION_POOL.get(stubId);
-    const connectionId = sub.connectionId;
-    await stub.fetch(`https://ws-connection-durable-object.internal/publish/${connectionId}`, {
-      method: "POST",
-      body: JSON.stringify(message),
-    });
-  });
-  return await Promise.all(promises).then(() => undefined);
+          // transform it into ws message (id is not specific to connection but to subscription)
+          const message: NextMessage = {
+            id: sub.id,
+            type: MessageType.Next,
+            payload,
+          };
+
+          return { message, connectionId: sub.connectionId };
+        })
+      );
+      // request to already existing DO
+      const stubId = WS_CONNECTION_POOL.idFromString(connectionPoolId);
+      const stub = WS_CONNECTION_POOL.get(stubId);
+      await stub.fetch(
+        `https://ws-connection-durable-object.internal/publish`,
+        {
+          method: "POST",
+          body: JSON.stringify(messagesAndConnectionIds),
+          headers: { "content-type": "application/json" },
+        }
+      );
+    }
+  );
+  return await Promise.all(promises);
 }
