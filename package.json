@@ -26,18 +26,18 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
+    "@graphql-tools/utils": "^9.1.4",
     "graphql": "^16.6.0",
     "graphql-ws": "^5.11.2",
-    "lodash": "^4.17.21"
-  },
-  "resolutions": {
-    "graphql": "^16.6.0"
+    "lodash": "^4.17.21",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20221111.1",
     "@databases/split-sql-query": "^1.0.3",
     "@databases/sql": "^3.3.0",
     "@types/lodash": "^4.14.191",
+    "@types/uuid": "^9.0.0",
     "better-sqlite3": "^8.0.1",
     "esbuild": "^0.17.2",
     "esbuild-visualizer": "^0.4.0",
@@ -49,5 +49,8 @@
     "dist/**",
     "migrations/*.sql"
   ],
-  "packageManager": "yarn@3.3.1"
+  "packageManager": "yarn@3.3.1",
+  "workspaces": [
+    "example"
+  ]
 }
