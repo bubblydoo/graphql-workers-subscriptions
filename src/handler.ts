@@ -24,7 +24,7 @@ export function handleSubscriptions<
     }),
   publishPathName = "/publish",
   wsConnectPathName = "/graphql",
-  pooling = "global",
+  pooling = "continent",
 }: {
   fetch?: T;
   schema: GraphQLSchema;
@@ -43,7 +43,12 @@ export function handleSubscriptions<
   ) => any;
   publishPathName?: string;
   wsConnectPathName?: string;
-  pooling?: "global" | "regional" | "none" | ((req: Request, env: Env) => string);
+  pooling?:
+    | "global"
+    | "colo"
+    | "continent"
+    | "none"
+    | ((req: Request, env: Env) => MaybePromise<string>);
 }): T {
   const wrappedFetch = (async (request, env, executionCtx) => {
     const authorized =
@@ -74,7 +79,8 @@ export function handleSubscriptions<
       return new Response("ok");
     } else if (path === wsConnectPathName && upgradeHeader === "websocket") {
       log("Received new websocket connection");
-      const poolingStrategyFn = typeof pooling === "function" ? pooling : poolingStrategies[pooling];
+      const poolingStrategyFn =
+        typeof pooling === "function" ? pooling : poolingStrategies[pooling];
       const stubName = await poolingStrategyFn(request, env);
       log("Using pool", stubName);
       const stubId = WS_CONNECTION_POOL.idFromName(stubName);
@@ -94,10 +100,18 @@ export function handleSubscriptions<
   return wrappedFetch;
 }
 
-const poolingStrategies: Record<"global" | "regional" | "none", (req: Request, env: any) => MaybePromise<string>> = {
+const poolingStrategies: Record<
+  "global" | "colo" | "continent" | "none",
+  (req: Request, env: any) => MaybePromise<string>
+> = {
   none: () => uuid(),
-  regional: (req) =>
-    ((req as any).cf as IncomingRequestCfProperties)?.colo ||
-    "global",
+  colo: (req) => {
+    const cf: IncomingRequestCfProperties = (req as any).cf;
+    return cf && "colo" in cf && cf.colo ? cf.colo : "global";
+  },
+  continent: (req) => {
+    const cf: IncomingRequestCfProperties = (req as any).cf;
+    return cf && "continent" in cf && cf.continent ? cf.continent : "global";
+  },
   global: () => "global",
-}
+};
