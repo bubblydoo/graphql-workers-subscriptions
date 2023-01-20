@@ -1,6 +1,6 @@
 import { GraphQLSchema } from "graphql";
 import { handleProtocols } from "graphql-ws";
-import { createSubscription, deleteSubscription } from "./createSubscription";
+import { createSubscription, deleteSubscription } from "./db";
 import { fixD1BetaEnv } from "./fixD1BetaEnv";
 import { createDefaultPublishableContext } from "./publishableContext";
 import { CreateContextFn } from "./types";

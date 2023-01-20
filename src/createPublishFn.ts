@@ -1,8 +1,9 @@
 import { Subscription } from "@/subscription";
-import { querySubscriptions } from "@/querySubscriptions";
 import { GraphQLSchema, parse, execute } from "graphql";
 import { MessageType, NextMessage } from "graphql-ws";
 import groupBy from "lodash/groupBy";
+import { querySubscriptions } from "./db";
+import { log } from "./log";
 
 type PublishFn = (event: { topic: string; payload?: any }) => Promise<void>;
 
@@ -51,11 +52,13 @@ async function publishToConnections(
   eventPayload: any,
   graphqlContext: any
 ) {
+  log("Publishing to", subscriptions.length, "subscriptions");
   // group subscriptions by connection pool
   const connectionPoolSubscriptionsMap = groupBy(
     subscriptions,
     (sub) => sub.connectionPoolId
   );
+  log("Grouped into", Object.keys(connectionPoolSubscriptionsMap).length, "pools");
   // promises of sent subscription messages
   const promises = Object.entries(connectionPoolSubscriptionsMap).map(
     async ([connectionPoolId, subscriptions]) => {

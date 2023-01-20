@@ -7,6 +7,7 @@ import {
 } from "graphql-ws";
 import { GraphQLSchema } from "graphql";
 import type { WebSocket } from "@cloudflare/workers-types";
+import { log } from "./log";
 
 /**
  * Accept and handle websocket connection with `graphql-ws`.
@@ -57,12 +58,11 @@ export async function useWebsocket(
     {
       protocol, // will be validated
       send: (data) => {
-        console.log("send", data);
-
+        log("Sending to connection", data);
         socket.send(data);
       },
       close: (code, reason) => {
-        console.log(code);
+        log("Closing connection", code);
 
         if (code === 4400) console.error(reason);
         socket.close(code, reason);

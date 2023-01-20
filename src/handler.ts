@@ -3,6 +3,7 @@ import { createPublishFn } from "./createPublishFn";
 import { createDefaultPublishableContext } from "./publishableContext";
 import { v4 as uuid } from "uuid";
 import { MaybePromise } from "./types";
+import { log } from "./log";
 
 export function handleSubscriptions<
   Env extends {} = {},
@@ -58,6 +59,7 @@ export function handleSubscriptions<
     const path = new URL(request.url).pathname;
 
     if (path === publishPathName && request.method === "POST") {
+      log("Received publish request");
       const reqBody: { topic: string; payload?: any } = await request.json();
       if (!reqBody.topic)
         return new Response("missing_topic_from_request", { status: 400 });
@@ -71,8 +73,10 @@ export function handleSubscriptions<
 
       return new Response("ok");
     } else if (path === wsConnectPathName && upgradeHeader === "websocket") {
+      log("Received new websocket connection");
       const poolingStrategyFn = typeof pooling === "function" ? pooling : poolingStrategies[pooling];
       const stubName = await poolingStrategyFn(request, env);
+      log("Using pool", stubName);
       const stubId = WS_CONNECTION_POOL.idFromName(stubName);
       const stub = WS_CONNECTION_POOL.get(stubId);
       const connectionId = uuid();

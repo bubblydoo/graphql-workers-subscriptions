@@ -43,8 +43,6 @@ export function createDefaultPublishableContext<Env extends {} = {}, TExecutionC
 
       // this would happen inside a Durable Object
       if (!executionCtx) return promise;
-
-      console.log(executionCtx.waitUntil.toString())
       
       executionCtx?.waitUntil(promise);
     },
