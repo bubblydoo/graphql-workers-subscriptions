@@ -2,6 +2,7 @@ import { GraphQLSchema } from "graphql";
 import { createPublishFn } from "./createPublishFn";
 import { createDefaultPublishableContext } from "./publishableContext";
 import { v4 as uuid } from "uuid";
+import { MaybePromise } from "./types";
 
 export function handleSubscriptions<
   Env extends {} = {},
@@ -41,7 +42,7 @@ export function handleSubscriptions<
   ) => any;
   publishPathName?: string;
   wsConnectPathName?: string;
-  pooling?: "global" | "regional" | "none";
+  pooling?: "global" | "regional" | "none" | ((req: Request, env: Env) => string);
 }): T {
   const wrappedFetch = (async (request, env, executionCtx) => {
     const authorized =
@@ -70,13 +71,8 @@ export function handleSubscriptions<
 
       return new Response("ok");
     } else if (path === wsConnectPathName && upgradeHeader === "websocket") {
-      const stubName = {
-        none: () => uuid(),
-        regional: () =>
-          ((request as any).cf as IncomingRequestCfProperties)?.colo ||
-          "global",
-        global: () => "global",
-      }[pooling]();
+      const poolingStrategyFn = typeof pooling === "function" ? pooling : poolingStrategies[pooling];
+      const stubName = await poolingStrategyFn(request, env);
       const stubId = WS_CONNECTION_POOL.idFromName(stubName);
       const stub = WS_CONNECTION_POOL.get(stubId);
       const connectionId = uuid();
@@ -92,4 +88,12 @@ export function handleSubscriptions<
     return new Response("not_found", { status: 404 });
   }) as T;
   return wrappedFetch;
+}
+
+const poolingStrategies: Record<"global" | "regional" | "none", (req: Request, env: any) => MaybePromise<string>> = {
+  none: () => uuid(),
+  regional: (req) =>
+    ((req as any).cf as IncomingRequestCfProperties)?.colo ||
+    "global",
+  global: () => "global",
 }
