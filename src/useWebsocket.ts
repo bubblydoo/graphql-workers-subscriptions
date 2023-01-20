@@ -3,35 +3,29 @@ import {
   makeServer,
   MessageType,
   stringifyMessage,
+  SubscribeMessage,
 } from "graphql-ws";
 import { GraphQLSchema } from "graphql";
 import type { WebSocket } from "@cloudflare/workers-types";
-import { createSubscription, deleteSubscription } from "./createSubscription";
-import { CreateContextFn } from "./types";
 
 /**
  * Accept and handle websocket connection with `graphql-ws`.
  * 
  * Handles messages, close, ping-pong
  */
-export async function useWebsocket<Env extends {} = {}>(
+export async function useWebsocket(
   socket: WebSocket,
   request: Request,
   protocol: ReturnType<typeof handleProtocols>,
   schema: GraphQLSchema,
-  SUBSCRIPTIONS_DB: D1Database,
-  connectionPoolId: string,
-  env: Env,
-  createContext: CreateContextFn<Env, ExecutionContext | undefined>,
-  connectionId: string
+  context: Record<string, any>,
+  createSubscription: (message: SubscribeMessage) => Promise<void>,
+  deleteSubscription: () => Promise<void>
 ) {
   // configure and make server
   const server = makeServer({
     schema,
-    context:
-      typeof createContext === "function"
-        ? await createContext(request, env, undefined)
-        : undefined,
+    context,
   });
 
   // accept socket to begin
@@ -81,7 +75,7 @@ export async function useWebsocket<Env extends {} = {}>(
 
             if (data.type === "subscribe") {
               // handle subscribe with specific handler
-              await createSubscription(connectionPoolId, connectionId, schema, data, SUBSCRIPTIONS_DB);
+              await createSubscription(data);
             } else {
               // or just use default handler
               cb(JSON.stringify(data));
@@ -105,7 +99,7 @@ export async function useWebsocket<Env extends {} = {}>(
 
     // this callback is called whenever the socket closes, so deleting from D1 only here is enough
 
-    await deleteSubscription(connectionId, SUBSCRIPTIONS_DB);
+    await deleteSubscription();
 
     callOnClosed(code, reason);
   }) as any);

@@ -1,6 +1,6 @@
 import { GraphQLSchema } from "graphql";
 import { handleProtocols } from "graphql-ws";
-import { deleteSubscription } from "./createSubscription";
+import { createSubscription, deleteSubscription } from "./createSubscription";
 import { fixD1BetaEnv } from "./fixD1BetaEnv";
 import { createDefaultPublishableContext } from "./publishableContext";
 import { CreateContextFn } from "./types";
@@ -15,7 +15,7 @@ export function createWsConnectionPoolClass<Env extends {} = {}>({
   schema,
   subscriptionsDb,
   wsConnectionPool,
-  context = (req, env) =>
+  context: createContext = (req, env) =>
     createDefaultPublishableContext<Env, undefined>({
       env,
       executionCtx: undefined,
@@ -57,16 +57,16 @@ export function createWsConnectionPoolClass<Env extends {} = {}>({
             request.headers.get("Sec-WebSocket-Protocol")!
           );
 
-          await useWebsocket<Env>(
+          const context = await createContext(request, this.env, undefined);
+
+          await useWebsocket(
             connection,
             request,
             protocol,
             schema,
-            this.subscriptionsDb,
-            connectionPoolId,
-            this.env,
             context,
-            connectionId
+            (message) => createSubscription(connectionPoolId, connectionId, schema, message, this.subscriptionsDb),
+            () => deleteSubscription(connectionId, this.subscriptionsDb)
           );
           return new Response(null, {
             status: 101,

@@ -6,21 +6,22 @@ import {
 } from "graphql/execution/execute";
 import { getResolverAndArgs } from "./getResolverAndArgs";
 import { GraphQLSchema } from "graphql";
+import { SubscribeMessage } from "graphql-ws";
 
 /** Creates a subscription in the database */
 export const createSubscription = async (
   connectionPoolId: string,
   connectionId: string,
   schema: GraphQLSchema,
-  data: any,
+  message: SubscribeMessage,
   SUBSCRIPTIONS_DB: D1Database
 ) => {
   // extract subscription related values based on schema
   const execContext = buildExecutionContext({
     schema,
-    document: parse(data.payload.query),
-    variableValues: data.payload.variables,
-    operationName: data.payload.operationName,
+    document: parse(message.payload.query),
+    variableValues: message.payload.variables,
+    operationName: message.payload.operationName,
   }) as ExecutionContext;
   const { field, root, args, context, info } = getResolverAndArgs({
     execContext,
@@ -42,13 +43,13 @@ export const createSubscription = async (
     "INSERT INTO Subscriptions(id,connectionPoolId,connectionId,subscription,topic,filter) VALUES(?,?,?,?,?,?);"
   )
     .bind(
-      data.id,
+      message.id,
       connectionPoolId,
       connectionId,
       JSON.stringify({
-        query: data.payload.query,
-        variables: data.payload.variables,
-        operationName: data.payload.operationName,
+        query: message.payload.query,
+        variables: message.payload.variables,
+        operationName: message.payload.operationName,
       }),
       topic,
       JSON.stringify(filterData)
