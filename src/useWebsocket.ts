@@ -20,9 +20,10 @@ export async function useWebsocket<Env extends {} = {}>(
   protocol: ReturnType<typeof handleProtocols>,
   schema: GraphQLSchema,
   SUBSCRIPTIONS_DB: D1Database,
-  state: DurableObjectState,
+  connectionPoolId: string,
   env: Env,
-  createContext: CreateContextFn<Env, ExecutionContext | undefined>
+  createContext: CreateContextFn<Env, ExecutionContext | undefined>,
+  connectionId: string
 ) {
   // configure and make server
   const server = makeServer({
@@ -38,7 +39,6 @@ export async function useWebsocket<Env extends {} = {}>(
 
   // subprotocol pinger because WS level ping/pongs are not be available
   let pinger: any, pongWait: any;
-  const connectionId = state.id.toString();
   function ping() {
     // READY_STATE_OPEN value
     if (socket.readyState === 1) {
@@ -81,7 +81,7 @@ export async function useWebsocket<Env extends {} = {}>(
 
             if (data.type === "subscribe") {
               // handle subscribe with specific handler
-              await createSubscription(connectionId, schema, data, SUBSCRIPTIONS_DB);
+              await createSubscription(connectionPoolId, connectionId, schema, data, SUBSCRIPTIONS_DB);
             } else {
               // or just use default handler
               cb(JSON.stringify(data));

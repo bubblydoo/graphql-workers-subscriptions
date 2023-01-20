@@ -9,6 +9,7 @@ import { GraphQLSchema } from "graphql";
 
 /** Creates a subscription in the database */
 export const createSubscription = async (
+  connectionPoolId: string,
   connectionId: string,
   schema: GraphQLSchema,
   data: any,
@@ -38,10 +39,11 @@ export const createSubscription = async (
   // write subscription to D1
 
   await SUBSCRIPTIONS_DB.prepare(
-    "INSERT INTO Subscriptions(id, connectionId, subscription, topic, filter) VALUES(?,?,?,?,?);"
+    "INSERT INTO Subscriptions(id,connectionPoolId,connectionId,subscription,topic,filter) VALUES(?,?,?,?,?,?);"
   )
     .bind(
       data.id,
+      connectionPoolId,
       connectionId,
       JSON.stringify({
         query: data.payload.query,

@@ -16,14 +16,14 @@ import { makeExecutableSchema } from "@graphql-tools/schema";
 import { createYoga } from "graphql-yoga";
 import {
   handleSubscriptions,
-  createWsConnectionClass,
+  createWsConnectionPoolClass,
   subscribe,
   DefaultPublishableContext,
   createDefaultPublishableContext,
 } from "graphql-worker-subscriptions";
 
 export interface ENV {
-  WS_CONNECTION: DurableObjectNamespace;
+  WS_CONNECTION_POOL: DurableObjectNamespace;
   SUBSCRIPTIONS: D1Database;
 }
 
@@ -70,7 +70,7 @@ export const schema = makeExecutableSchema<DefaultPublishableContext<ENV>>({
 
 const settings = {
   schema,
-  wsConnection: (env: ENV) => env.WS_CONNECTION,
+  wsConnectionPool: (env: ENV) => env.WS_CONNECTION_POOL,
   subscriptionsDb: (env: ENV) => env.SUBSCRIPTIONS,
 };
 
@@ -100,13 +100,13 @@ const fetch = handleSubscriptions({ fetch: baseFetch, ...settings });
 
 export default { fetch };
 
-export const WsConnection = createWsConnectionClass(settings);
+export const WsConnectionPool = createWsConnectionPoolClass(settings);
 ```
 
 ```toml
 # wrangler.toml
 [[migrations]]
-new_classes = ["WsConnection"]
+new_classes = ["WsConnectionPool"]
 tag = "v1"
 
 [build]
@@ -121,7 +121,7 @@ migrations_dir = "node_modules/graphql-worker-subscriptions/migrations"
 preview_database_id = "877f1123-088e-43ed-8d4d-37e71c77157c"
 
 [durable_objects]
-bindings = [{name = "WS_CONNECTION", class_name = "WsConnection"}]
+bindings = [{name = "WS_CONNECTION_POOL", class_name = "WsConnectionPool"}]
 ```
 
 ### Deployment

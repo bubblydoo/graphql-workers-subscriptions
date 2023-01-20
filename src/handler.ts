@@ -1,6 +1,7 @@
 import { GraphQLSchema } from "graphql";
 import { createPublishFn } from "./createPublishFn";
 import { createDefaultPublishableContext } from "./publishableContext";
+import { v4 as uuid } from "uuid";
 
 export function handleSubscriptions<
   Env extends {} = {},
@@ -8,7 +9,7 @@ export function handleSubscriptions<
 >({
   fetch,
   schema,
-  wsConnection,
+  wsConnectionPool,
   subscriptionsDb,
   isAuthorized,
   context: createContext = (request, env, executionCtx, requestBody) =>
@@ -16,15 +17,16 @@ export function handleSubscriptions<
       env,
       executionCtx,
       schema,
-      wsConnection,
+      wsConnectionPool,
       subscriptionsDb,
     }),
   publishPathName = "/publish",
   wsConnectPathName = "/graphql",
+  pooling = "global",
 }: {
   fetch?: T;
   schema: GraphQLSchema;
-  wsConnection: (env: Env) => DurableObjectNamespace;
+  wsConnectionPool: (env: Env) => DurableObjectNamespace;
   subscriptionsDb: (env: Env) => D1Database;
   isAuthorized?: (
     request: Request,
@@ -39,6 +41,7 @@ export function handleSubscriptions<
   ) => any;
   publishPathName?: string;
   wsConnectPathName?: string;
+  pooling?: "global" | "regional" | "none";
 }): T {
   const wrappedFetch = (async (request, env, executionCtx) => {
     const authorized =
@@ -47,7 +50,7 @@ export function handleSubscriptions<
         : true;
     if (!authorized) return new Response("unauthorized", { status: 400 });
 
-    const WS_CONNECTION = wsConnection(env);
+    const WS_CONNECTION_POOL = wsConnectionPool(env);
     const SUBSCRIPTIONS_DB = subscriptionsDb(env);
 
     const upgradeHeader = request.headers.get("Upgrade");
@@ -58,18 +61,29 @@ export function handleSubscriptions<
       if (!reqBody.topic)
         return new Response("missing_topic_from_request", { status: 400 });
       const publish = createPublishFn(
-        WS_CONNECTION,
+        WS_CONNECTION_POOL,
         SUBSCRIPTIONS_DB,
         schema,
-        createContext(request, env, executionCtx, reqBody),
+        createContext(request, env, executionCtx, reqBody)
       );
       executionCtx.waitUntil(publish(reqBody));
 
       return new Response("ok");
     } else if (path === wsConnectPathName && upgradeHeader === "websocket") {
-      const stubId = WS_CONNECTION.newUniqueId();
-      const stub = WS_CONNECTION.get(stubId);
-      return stub.fetch("https://ws-connection-durable-object.internal/connect", request);
+      const stubName = {
+        none: () => uuid(),
+        regional: () =>
+          ((request as any).cf as IncomingRequestCfProperties)?.colo ||
+          "global",
+        global: () => "global",
+      }[pooling]();
+      const stubId = WS_CONNECTION_POOL.idFromName(stubName);
+      const stub = WS_CONNECTION_POOL.get(stubId);
+      const connectionId = uuid();
+      return stub.fetch(
+        `https://ws-connection-durable-object.internal/connect/${connectionId}`,
+        request
+      );
     }
 
     if (typeof fetch === "function") {

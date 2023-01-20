@@ -11,7 +11,7 @@ type PublishFn = (event: { topic: string; payload?: any }) => Promise<void>;
  */
 export const createPublishFn =
   (
-    WS_CONNECTION: DurableObjectNamespace,
+    WS_CONNECTION_POOL: DurableObjectNamespace,
     SUBSCRIPTIONS_DB: D1Database,
     schema: GraphQLSchema,
     graphqlContext: any
@@ -36,7 +36,7 @@ export const createPublishFn =
 
     await publishToConnections(
       subscriptions,
-      WS_CONNECTION,
+      WS_CONNECTION_POOL,
       schema,
       event.payload,
       graphqlContext
@@ -45,7 +45,7 @@ export const createPublishFn =
 
 async function publishToConnections(
   subscriptions: Subscription[],
-  WS_CONNECTION: DurableObjectNamespace,
+  WS_CONNECTION_POOL: DurableObjectNamespace,
   schema: GraphQLSchema,
   eventPayload: any,
   graphqlContext: any
@@ -70,9 +70,10 @@ async function publishToConnections(
       payload,
     };
     // request to already existing DO
-    const stubId = WS_CONNECTION.idFromString(sub.connectionId);
-    const stub = WS_CONNECTION.get(stubId);
-    await stub.fetch("https://ws-connection-durable-object.internal/publish", {
+    const stubId = WS_CONNECTION_POOL.idFromString(sub.connectionPoolId);
+    const stub = WS_CONNECTION_POOL.get(stubId);
+    const connectionId = sub.connectionId;
+    await stub.fetch(`https://ws-connection-durable-object.internal/publish/${connectionId}`, {
       method: "POST",
       body: JSON.stringify(message),
     });

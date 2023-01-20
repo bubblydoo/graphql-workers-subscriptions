@@ -10,54 +10,58 @@ type ConstructableDurableObject<Env> = {
 };
 
 /** Creates a WsConnection DurableObject class */
-export function createWsConnectionClass<Env extends {} = {}>(
-  {
-    schema,
-    subscriptionsDb,
-    wsConnection,
-    context = (req, env) =>
-      createDefaultPublishableContext<Env, undefined>({
-        env,
-        executionCtx: undefined,
-        subscriptionsDb,
-        wsConnection,
-        schema,
-      })
-  }: {
-    schema: GraphQLSchema,
-    subscriptionsDb: (env: Env) => D1Database,
-    wsConnection: (env: Env) => DurableObjectNamespace,
-    context?: CreateContextFn<Env, ExecutionContext | undefined>
-  }
-): ConstructableDurableObject<Env> {
-  return class WsConnection implements DurableObject {
-    private server: WebSocket | undefined;
+export function createWsConnectionPoolClass<Env extends {} = {}>({
+  schema,
+  subscriptionsDb,
+  wsConnectionPool,
+  context = (req, env) =>
+    createDefaultPublishableContext<Env, undefined>({
+      env,
+      executionCtx: undefined,
+      subscriptionsDb,
+      wsConnectionPool,
+      schema,
+    }),
+}: {
+  schema: GraphQLSchema;
+  subscriptionsDb: (env: Env) => D1Database;
+  wsConnectionPool: (env: Env) => DurableObjectNamespace;
+  context?: CreateContextFn<Env, ExecutionContext | undefined>;
+}): ConstructableDurableObject<Env> {
+  return class WsConnectionPool implements DurableObject {
+    private connections = new Map<string, WebSocket>();
     private env: Env;
     constructor(private state: DurableObjectState, env: Env) {
       this.env = fixD1BetaEnv(env);
     }
     async fetch(request: Request) {
-      const path = new URL(request.url).pathname;
+      const path = new URL(request.url).pathname.slice(1);
+      const [action, connectionId] = path.split("/");
+      const connectionPoolId = this.state.id.toString();
+
       // DO router
-      switch (path) {
+      switch (action) {
         // connection will be established here
-        case "/connect":
+        case "connect": {
           // creating ws pair (we use server to send to the client and we return the client in the response)
-          const [client, server] = Object.values(new WebSocketPair()) as any[];
-          this.server = server;
+          const [client, connection] = Object.values(
+            new WebSocketPair()
+          ) as any[];
+          this.connections.set(connectionId, connection);
           const protocol = handleProtocols(
             request.headers.get("Sec-WebSocket-Protocol")!
           );
 
           await useWebsocket<Env>(
-            server,
+            connection,
             request,
             protocol,
             schema,
             subscriptionsDb(this.env),
-            this.state,
+            connectionPoolId,
             this.env,
-            context
+            context,
+            connectionId
           );
           return new Response(null, {
             status: 101,
@@ -70,14 +74,27 @@ export function createWsConnectionClass<Env extends {} = {}>(
                 }
               : {},
           });
-        case "/close":
+        }
+        case "close": {
           // delete from D1 handled internally
-          this.server?.close();
-        case "/publish":
+          const connection = this.connections.get(connectionId);
+          if (!connection)
+            throw new Error(
+              `Connection not found in: ${connectionId} in ${connectionPoolId}`
+            );
+          return new Response("ok");
+        }
+        case "publish": {
           // POST request with topic and payload transformed into a ws message via the publish handler
           const req = await request.text();
-          this.server?.send(req);
+          const connection = this.connections.get(connectionId);
+          if (!connection)
+            throw new Error(
+              `Connection not found in: ${connectionId} in ${connectionPoolId}`
+            );
+          connection.send(req);
           return new Response("ok");
+        }
         default:
           throw new Error("bad_request");
       }
