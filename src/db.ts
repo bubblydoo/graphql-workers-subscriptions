@@ -11,7 +11,7 @@ export const insertSubscription = async (
   // write subscription to D1
   await subscriptionsDb
     .prepare(
-      `INSERT INTO ${tableName}(id,connectionId,connectionPoolId,subscription,topic,filter) VALUES(?,?,?,?,?,?);`
+      `INSERT INTO ${tableName}(id,connectionId,connectionPoolId,subscription,topic,filter) VALUES(?,?,?,?,?,?)`
     )
     .bind(
       subscription.id,
@@ -32,7 +32,7 @@ export const deleteSubscription = async (
 ) => {
   log("Deleting connection from db", connectionId);
   await subscriptionsDb
-    .prepare(`DELETE FROM ${tableName} WHERE connectionId = ?;`)
+    .prepare(`DELETE FROM ${tableName} WHERE connectionId = ?`)
     .bind(connectionId)
     .run();
 };
@@ -47,7 +47,7 @@ export const querySubscriptions = async (
 ) => {
   log("Querying db", topic, filter);
 
-  const sql = `SELECT * FROM ${tableName} WHERE topic = ?1 AND (filter is null OR json_patch(?2, filter) = ?2);`;
+  const sql = `SELECT * FROM ${tableName} WHERE topic = ?1 AND (filter is null OR json_patch(?2, filter) = ?2)`;
   const binds = [topic, JSON.stringify(filter)];
 
   const { results } = await subscriptionsDb

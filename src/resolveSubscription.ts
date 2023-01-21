@@ -42,11 +42,7 @@ export const resolveSubscription = async (
     id: message.id,
     connectionPoolId,
     connectionId,
-    subscription: {
-      query: message.payload.query,
-      variables: message.payload.variables,
-      operationName: message.payload.operationName!,
-    },
+    subscription: message.payload,
     topic,
     filter,
   };
