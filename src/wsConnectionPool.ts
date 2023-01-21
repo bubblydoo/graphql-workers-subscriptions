@@ -1,6 +1,7 @@
 import { GraphQLSchema } from "graphql";
 import { handleProtocols } from "graphql-ws";
-import { createSubscription, deleteSubscription } from "./db";
+import * as db from "./db";
+import { resolveSubscription } from "./resolveSubscription";
 import { fixD1BetaEnv } from "./fixD1BetaEnv";
 import { createDefaultPublishableContext } from "./publishableContext";
 import { CreateContextFn } from "./types";
@@ -65,8 +66,16 @@ export function createWsConnectionPoolClass<Env extends {} = {}>({
             protocol,
             schema,
             context,
-            (message) => createSubscription(connectionPoolId, connectionId, schema, message, this.subscriptionsDb),
-            () => deleteSubscription(connectionId, this.subscriptionsDb)
+            async (message) => {
+              const subscription = await resolveSubscription(
+                message,
+                schema,
+                connectionId,
+                connectionPoolId
+              );
+              await db.insertSubscription(this.subscriptionsDb, subscription);
+            },
+            () => db.deleteSubscription(this.subscriptionsDb, connectionId)
           );
           return new Response(null, {
             status: 101,
@@ -84,7 +93,7 @@ export function createWsConnectionPoolClass<Env extends {} = {}>({
           const connectionId = pathParts[1];
           const connection = this.connections.get(connectionId);
           if (!connection) {
-            await deleteSubscription(connectionId, this.subscriptionsDb);
+            await db.deleteSubscription(this.subscriptionsDb, connectionId);
             return new Response("ok");
           }
           // delete from D1 handled by `useWebsocket`
@@ -105,7 +114,7 @@ export function createWsConnectionPoolClass<Env extends {} = {}>({
               // it's probably because the durable object was somehow destroyed,
               // in which case the websocket was closed and we can delete it from the database
               // - if it's already closed (maybe by the client) we can also delete it
-              await deleteSubscription(connectionId, this.subscriptionsDb);
+              await db.deleteSubscription(this.subscriptionsDb, connectionId);
               continue;
             }
             connection.send(JSON.stringify(message));

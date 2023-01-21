@@ -1,110 +1,68 @@
-import { parse } from "graphql";
-import type { SubscribePseudoIterable, PubSubEvent } from "./types";
-import {
-  buildExecutionContext,
-  ExecutionContext,
-} from "graphql/execution/execute";
-import { getResolverAndArgs } from "./getResolverAndArgs";
-import { GraphQLSchema } from "graphql";
-import { SubscribeMessage } from "graphql-ws";
 import { log } from "./log";
+import { Subscription } from "./subscription";
+
+const tableName = "Subscriptions";
 
 /** Creates a subscription in the database */
-export const createSubscription = async (
-  connectionPoolId: string,
-  connectionId: string,
-  schema: GraphQLSchema,
-  message: SubscribeMessage,
-  db: D1Database
+export const insertSubscription = async (
+  subscriptionsDb: D1Database,
+  subscription: Subscription
 ) => {
-  // extract subscription related values based on schema
-  const execContext = buildExecutionContext({
-    schema,
-    document: parse(message.payload.query),
-    variableValues: message.payload.variables,
-    operationName: message.payload.operationName,
-  }) as ExecutionContext;
-  const { field, root, args, context, info } = getResolverAndArgs({
-    execContext,
-  });
-
-  if (!field) {
-    throw new Error("No field");
-  }
-
-  const { topic, filter } =
-    field.subscribe as SubscribePseudoIterable<PubSubEvent>;
-  // execute filter callback if defined (return filter data saved to D1)
-  const filterData =
-    typeof filter === "function" ? filter(root, args, context, info) : filter;
-
   // write subscription to D1
-
-  log(
-    "Inserting connection into db",
-    connectionId,
-    "pool:",
-    connectionPoolId,
-    "topic:",
-    topic
-  );
-  await db.prepare(
-    "INSERT INTO Subscriptions(id,connectionPoolId,connectionId,subscription,topic,filter) VALUES(?,?,?,?,?,?);"
-  )
-    .bind(
-      message.id,
-      connectionPoolId,
-      connectionId,
-      JSON.stringify({
-        query: message.payload.query,
-        variables: message.payload.variables,
-        operationName: message.payload.operationName,
-      }),
-      topic,
-      JSON.stringify(filterData)
+  await subscriptionsDb
+    .prepare(
+      `INSERT INTO ${tableName}(id,connectionId,connectionPoolId,subscription,topic,filter) VALUES(?,?,?,?,?,?);`
     )
-    .run()
-    .then();
-};
-
-export const deleteSubscription = async (
-  connectionId: string,
-  db: D1Database
-) => {
-  log("Deleting connection from db", connectionId);
-  await db.prepare(
-    "DELETE FROM Subscriptions WHERE connectionId = ?;"
-  )
-    .bind(connectionId)
+    .bind(
+      subscription.id,
+      subscription.connectionId,
+      subscription.connectionPoolId,
+      JSON.stringify(subscription.subscription),
+      subscription.topic,
+      subscription.filter === null || subscription.filter === undefined
+        ? null
+        : JSON.stringify(subscription.filter)
+    )
     .run();
 };
 
-const getQuerySubscriptionsSql = (
-  dbName: string,
-  topic: string,
-  filter: any
+export const deleteSubscription = async (
+  subscriptionsDb: D1Database,
+  connectionId: string
 ) => {
-  return {
-    sql: `SELECT * FROM ${dbName} WHERE topic = ?1 AND (filter is null OR json_patch(?2, filter) = ?2);`,
-    binds: [topic, JSON.stringify(filter)],
-  };
+  log("Deleting connection from db", connectionId);
+  await subscriptionsDb
+    .prepare(`DELETE FROM ${tableName} WHERE connectionId = ?;`)
+    .bind(connectionId)
+    .run();
 };
 
 /**
  * Query all subscriptions in the db by topic and filter
  */
-export const querySubscriptions = (
-  db: D1Database,
-  dbName: string,
+export const querySubscriptions = async (
+  subscriptionsDb: D1Database,
   topic: string,
   filter: any
 ) => {
   log("Querying db", topic, filter);
 
-  const { sql, binds } = getQuerySubscriptionsSql(dbName, topic, filter);
+  const sql = `SELECT * FROM ${tableName} WHERE topic = ?1 AND (filter is null OR json_patch(?2, filter) = ?2);`;
+  const binds = [topic, JSON.stringify(filter)];
 
-  return db
+  const { results } = await subscriptionsDb
     .prepare(sql)
     .bind(...binds)
     .all();
+
+  const subscriptions = results?.map((res: any) => ({
+    ...res,
+    filter: typeof res.filter === "string" ? JSON.parse(res.filter) : undefined,
+    subscription:
+      typeof res.subscription === "string"
+        ? JSON.parse(res.subscription)
+        : undefined,
+  })) as Subscription[];
+
+  return subscriptions;
 };
