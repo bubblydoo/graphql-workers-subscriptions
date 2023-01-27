@@ -65,21 +65,23 @@ const yoga = createYoga<DefaultPublishableContext<ENV>>({
   graphiql: {
     // Use WebSockets in GraphiQL
     subscriptionsProtocol: "WS",
-    defaultQuery: `mutation Say {
-  greet(greeting: "hi!")
-}
+    defaultQuery: /* GraphQL */ `
+      mutation Say {
+        greet(greeting: "hi!")
+      }
 
-subscription Listen {
-  greetings {
-    greeting
-  }
-}
+      subscription Listen {
+        greetings {
+          greeting
+        }
+      }
 
-subscription ListenToHi {
-  greetings(greeting: "hi!") {
-    greeting
-  }
-}`,
+      subscription ListenToHi {
+        greetings(greeting: "hi!") {
+          greeting
+        }
+      }
+    `,
   },
 });
 
@@ -97,8 +99,19 @@ const baseFetch: ExportedHandlerFetchHandler<ENV> = (
     })
   );
 
-const fetch = handleSubscriptions({ fetch: baseFetch, ...settings });
+const fetch = handleSubscriptions({
+  fetch: baseFetch,
+  ...settings,
+});
 
 export default { fetch };
 
-export const WsConnection = createWsConnectionClass(settings);
+export const WsConnection = createWsConnectionClass({
+  ...settings,
+  onConnect(ctx) {
+    // place for ws authenticaton, init payload can be validated
+    console.log("init payload:", ctx.connectionParams);
+
+    return true;
+  },
+});
