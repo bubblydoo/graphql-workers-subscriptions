@@ -4,6 +4,7 @@ import { fixD1BetaEnv } from "./fixD1BetaEnv";
 import { createDefaultPublishableContext } from "./publishableContext";
 import { CreateContextFn } from "./types";
 import { useWebsocket } from "./useWebsocket";
+import type { WebSocket, MessageEvent } from "@cloudflare/workers-types";
 
 type ConstructableDurableObject<Env> = {
   new (state: DurableObjectState, env: Env): DurableObject;
@@ -22,14 +23,15 @@ export function createWsConnectionClass<Env extends {} = {}>(
         subscriptionsDb,
         wsConnection,
         schema,
-      })
+      }),
+    onConnect,
   }: {
     schema: GraphQLSchema,
     subscriptionsDb: (env: Env) => D1Database,
     wsConnection: (env: Env) => DurableObjectNamespace,
-    context?: CreateContextFn<Env, ExecutionContext | undefined>
-  }
-): ConstructableDurableObject<Env> {
+    context?: CreateContextFn<Env, ExecutionContext | undefined>,
+    onConnect?: (ctx: any) => void,
+}): ConstructableDurableObject<Env> {
   return class WsConnection implements DurableObject {
     private server: WebSocket | undefined;
     private env: Env;
@@ -57,7 +59,8 @@ export function createWsConnectionClass<Env extends {} = {}>(
             subscriptionsDb(this.env),
             this.state,
             this.env,
-            context
+            context,
+            onConnect
           );
           return new Response(null, {
             status: 101,
