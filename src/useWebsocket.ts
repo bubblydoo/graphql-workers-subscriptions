@@ -5,7 +5,7 @@ import {
   stringifyMessage,
 } from "graphql-ws";
 import { GraphQLSchema } from "graphql";
-import type { WebSocket } from "@cloudflare/workers-types";
+import type { WebSocket, MessageEvent } from "@cloudflare/workers-types";
 import { createSubscription } from "./createSubscription";
 import { CreateContextFn } from "./types";
 
@@ -22,7 +22,8 @@ export async function useWebsocket<Env extends {} = {}>(
   SUBSCRIPTIONS_DB: D1Database,
   state: DurableObjectState,
   env: Env,
-  createContext: CreateContextFn<Env, ExecutionContext | undefined>
+  createContext: CreateContextFn<Env, ExecutionContext | undefined>,
+  onConnect?: (ctx: any) => void | boolean
 ) {
   // configure and make server
   const server = makeServer({
@@ -31,12 +32,13 @@ export async function useWebsocket<Env extends {} = {}>(
       typeof createContext === "function"
         ? await createContext(request, env, undefined)
         : undefined,
+    onConnect,
   });
 
   // accept socket to begin
   socket.accept();
 
-  // subprotocol pinger because WS level ping/pongs are not be available
+  // subprotocol pinger because WS level ping/pongs are not available
   let pinger: any, pongWait: any;
   const connectionId = state.id.toString();
   function ping() {
@@ -109,8 +111,7 @@ export async function useWebsocket<Env extends {} = {}>(
       "DELETE FROM Subscriptions WHERE connectionId = ? ;"
     )
       .bind(connectionId)
-      .run()
-      .then(); // to return empty promise
+      .run();
 
     callOnClosed(code, reason);
   }) as any);
