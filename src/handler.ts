@@ -19,8 +19,8 @@ export function handleSubscriptions<
       wsConnection,
       subscriptionsDb,
     }),
-  publishPathName = "/publish",
-  wsConnectPathName = "/graphql",
+  publishPathName = () => "/publish",
+  wsConnectPathName = () => "/graphql",
 }: {
   fetch?: T;
   schema: GraphQLSchema;
@@ -37,8 +37,16 @@ export function handleSubscriptions<
     executionCtx: ExecutionContext,
     requestBody: any
   ) => any;
-  publishPathName?: string;
-  wsConnectPathName?: string;
+  publishPathName?: (
+    request: Request,
+    env: Env,
+    executionCtx: ExecutionContext
+  ) => string;
+  wsConnectPathName?: (
+    request: Request,
+    env: Env,
+    executionCtx: ExecutionContext
+  ) => string;
 }): T {
   const wrappedFetch = (async (request, env, executionCtx) => {
     const authorized =
@@ -53,7 +61,10 @@ export function handleSubscriptions<
     const upgradeHeader = request.headers.get("Upgrade");
     const path = new URL(request.url).pathname;
 
-    if (path === publishPathName && request.method === "POST") {
+    if (
+      path === publishPathName(request, env, executionCtx) &&
+      request.method === "POST"
+    ) {
       const reqBody: { topic: string; payload?: any } = await request.json();
       if (!reqBody.topic)
         return new Response("missing_topic_from_request", { status: 400 });
@@ -61,15 +72,21 @@ export function handleSubscriptions<
         WS_CONNECTION,
         SUBSCRIPTIONS_DB,
         schema,
-        createContext(request, env, executionCtx, reqBody),
+        createContext(request, env, executionCtx, reqBody)
       );
       executionCtx.waitUntil(publish(reqBody));
 
       return new Response("ok");
-    } else if (path === wsConnectPathName && upgradeHeader === "websocket") {
+    } else if (
+      path === wsConnectPathName(request, env, executionCtx) &&
+      upgradeHeader === "websocket"
+    ) {
       const stubId = WS_CONNECTION.newUniqueId();
       const stub = WS_CONNECTION.get(stubId);
-      return stub.fetch("https://ws-connection-durable-object.internal/connect", request);
+      return stub.fetch(
+        "https://ws-connection-durable-object.internal/connect",
+        request
+      );
     }
 
     if (typeof fetch === "function") {
