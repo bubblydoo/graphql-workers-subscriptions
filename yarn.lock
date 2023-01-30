@@ -2079,7 +2079,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql-workers-subscriptions@^0.0.4, graphql-workers-subscriptions@workspace:.":
+"graphql-workers-subscriptions@npm:^0.0.4":
+  version: 0.0.4
+  resolution: "graphql-workers-subscriptions@npm:0.0.4"
+  dependencies:
+    "@graphql-tools/utils": ^9.1.4
+    graphql: ^16.6.0
+    graphql-ws: ^5.11.2
+    lodash: ^4.17.21
+    uuid: ^9.0.0
+  checksum: 96f1f180a12a6aa7ee59870ec0347e435606d2a5067c423e97bbd877c07abe5f72a77b88a431a85019734ff91839677332f218e7e966d81fa4638450b1ad8da2
+  languageName: node
+  linkType: hard
+
+"graphql-workers-subscriptions@workspace:.":
   version: 0.0.0-use.local
   resolution: "graphql-workers-subscriptions@workspace:."
   dependencies:
