@@ -11,7 +11,7 @@ import { CreateContextFn } from "./types";
 
 /**
  * Accept and handle websocket connection with `graphql-ws`.
- * 
+ *
  * Handles messages, close, ping-pong
  */
 export async function useWebsocket<Env extends {} = {}>(
@@ -83,7 +83,12 @@ export async function useWebsocket<Env extends {} = {}>(
 
             if (data.type === "subscribe") {
               // handle subscribe with specific handler
-              await createSubscription(connectionId, schema, data, SUBSCRIPTIONS_DB);
+              await createSubscription(
+                connectionId,
+                schema,
+                data,
+                SUBSCRIPTIONS_DB
+              );
             } else {
               // or just use default handler
               cb(JSON.stringify(data));
@@ -97,7 +102,7 @@ export async function useWebsocket<Env extends {} = {}>(
       onPong: () => clearTimeout(pongWait),
     },
     // pass values to the `extra` field in the context
-    { socket, request }
+    { socket, request, env }
   );
 
   // notify server that the socket closed and stop the pinger
