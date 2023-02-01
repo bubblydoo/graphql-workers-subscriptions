@@ -9,6 +9,7 @@ Features:
 - 🔍 In-database JSON filtering
 - 🗺 Publish from anywhere
 - 🎹 Great typings
+- 🔐 Authentication
 
 ```ts
 // app.ts
@@ -96,11 +97,28 @@ const baseFetch: ExportedHandlerFetchHandler<ENV> = (
     })
   );
 
-const fetch = handleSubscriptions({ fetch: baseFetch, ...settings });
+const fetch = handleSubscriptions({
+  fetch: baseFetch,
+  ...settings,
+  isAuthorized(req, env, exectutionCtx) {
+    // authentication runs before everything else
+    //  websocket authentication is handled elsewhere since custom headers are not allowed
+    const isWebsocket = req.headers.get("Upgrade") === "websocket";
+    return isWebsocket || true // false will return 404 response 
+  },
+});
 
 export default { fetch };
 
-export const WsConnection = createWsConnectionClass(settings);
+export const WsConnection = createWsConnectionClass({
+  ...settings,
+  onConnect(ctx) {
+    // your custom ws authentication
+    // {req, env, socket} are available on ctx.extra
+    // connect init payload available at ctx.connectionParams
+    return true; // or undefined to allow connection
+  },
+});
 ```
 
 ```toml
@@ -160,7 +178,7 @@ To disable this, pass `isAuthorized: () => false` to `handleSubscriptions`, or a
 
 Subscriptions are stored inside D1.
 
-The D1 database has 4 columns:
+The D1 database has 5 columns:
 
 - id (websocket message id that will be matched with the client-side subscription, a string)
 - connectionId (a Durable Object id, a string)
