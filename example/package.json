@@ -14,7 +14,7 @@
   "dependencies": {
     "@graphql-tools/schema": "^9.0.13",
     "graphql": "^16.6.0",
-    "graphql-workers-subscriptions": "^0.0.5",
+    "graphql-workers-subscriptions": "^0.0.7",
     "graphql-yoga": "^3.3.0"
   },
   "resolutions": {
