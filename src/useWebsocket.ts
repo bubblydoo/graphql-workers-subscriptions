@@ -89,6 +89,12 @@ export async function useWebsocket<Env extends {} = {}>(
                 data,
                 SUBSCRIPTIONS_DB
               );
+            } else if (data.type === "complete") {
+              await SUBSCRIPTIONS_DB.prepare(
+                "DELETE FROM Subscriptions WHERE id = ? ;"
+              )
+                .bind(data.id)
+                .run();
             } else {
               // or just use default handler
               cb(JSON.stringify(data));
