@@ -3,35 +3,33 @@ import {
   makeServer,
   MessageType,
   stringifyMessage,
+  SubscribeMessage,
 } from "graphql-ws";
 import { GraphQLSchema } from "graphql";
-import type { WebSocket, MessageEvent } from "@cloudflare/workers-types";
-import { createSubscription } from "./createSubscription";
-import { CreateContextFn } from "./types";
+import type { WebSocket } from "@cloudflare/workers-types";
+import { log } from "./log";
+import { OnConnectFn } from "./types";
 
 /**
  * Accept and handle websocket connection with `graphql-ws`.
  *
  * Handles messages, close, ping-pong
  */
-export async function useWebsocket<Env extends {} = {}>(
+export async function useWebsocket<Env extends {} = any>(
   socket: WebSocket,
   request: Request,
   protocol: ReturnType<typeof handleProtocols>,
   schema: GraphQLSchema,
-  SUBSCRIPTIONS_DB: D1Database,
-  state: DurableObjectState,
+  context: Record<string, any>,
+  onConnect: OnConnectFn<Env>,
   env: Env,
-  createContext: CreateContextFn<Env, ExecutionContext | undefined>,
-  onConnect?: (ctx: any) => void | boolean
+  createSubscription: (message: SubscribeMessage) => Promise<void>,
+  deleteSubscription: () => Promise<void>
 ) {
   // configure and make server
   const server = makeServer({
     schema,
-    context:
-      typeof createContext === "function"
-        ? await createContext(request, env, undefined)
-        : undefined,
+    context,
     onConnect,
   });
 
@@ -40,7 +38,6 @@ export async function useWebsocket<Env extends {} = {}>(
 
   // subprotocol pinger because WS level ping/pongs are not available
   let pinger: any, pongWait: any;
-  const connectionId = state.id.toString();
   function ping() {
     // READY_STATE_OPEN value
     if (socket.readyState === 1) {
@@ -65,14 +62,12 @@ export async function useWebsocket<Env extends {} = {}>(
     {
       protocol, // will be validated
       send: (data) => {
-        console.log("send", data);
-
+        log("Sending to connection", data);
         socket.send(data);
       },
       close: (code, reason) => {
-        console.log(code);
-
-        if (code === 4400) console.error(reason);
+        log("Closing connection", code);
+        if (code >= 4000 && code < 5000) console.error(reason);
         socket.close(code, reason);
       },
       onMessage: (cb) =>
@@ -83,18 +78,7 @@ export async function useWebsocket<Env extends {} = {}>(
 
             if (data.type === "subscribe") {
               // handle subscribe with specific handler
-              await createSubscription(
-                connectionId,
-                schema,
-                data,
-                SUBSCRIPTIONS_DB
-              );
-            } else if (data.type === "complete") {
-              await SUBSCRIPTIONS_DB.prepare(
-                "DELETE FROM Subscriptions WHERE id = ? ;"
-              )
-                .bind(data.id)
-                .run();
+              await createSubscription(data);
             } else {
               // or just use default handler
               cb(JSON.stringify(data));
@@ -118,11 +102,7 @@ export async function useWebsocket<Env extends {} = {}>(
 
     // this callback is called whenever the socket closes, so deleting from D1 only here is enough
 
-    await SUBSCRIPTIONS_DB.prepare(
-      "DELETE FROM Subscriptions WHERE connectionId = ? ;"
-    )
-      .bind(connectionId)
-      .run();
+    await deleteSubscription();
 
     callOnClosed(code, reason);
   }) as any);

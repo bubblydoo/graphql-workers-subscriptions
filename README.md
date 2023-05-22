@@ -17,14 +17,14 @@ import { makeExecutableSchema } from "@graphql-tools/schema";
 import { createYoga } from "graphql-yoga";
 import {
   handleSubscriptions,
-  createWsConnectionClass,
+  createWsConnectionPoolClass,
   subscribe,
   DefaultPublishableContext,
   createDefaultPublishableContext,
 } from "graphql-worker-subscriptions";
 
 export interface ENV {
-  WS_CONNECTION: DurableObjectNamespace;
+  WS_CONNECTION_POOL: DurableObjectNamespace;
   SUBSCRIPTIONS: D1Database;
 }
 
@@ -71,7 +71,7 @@ export const schema = makeExecutableSchema<DefaultPublishableContext<ENV>>({
 
 const settings = {
   schema,
-  wsConnection: (env: ENV) => env.WS_CONNECTION,
+  wsConnectionPool: (env: ENV) => env.WS_CONNECTION_POOL,
   subscriptionsDb: (env: ENV) => env.SUBSCRIPTIONS,
 };
 
@@ -100,31 +100,17 @@ const baseFetch: ExportedHandlerFetchHandler<ENV> = (
 const fetch = handleSubscriptions({
   fetch: baseFetch,
   ...settings,
-  isAuthorized(req, env, exectutionCtx) {
-    // authentication runs before everything else
-    //  websocket authentication is handled elsewhere since custom headers are not allowed
-    const isWebsocket = req.headers.get("Upgrade") === "websocket";
-    return isWebsocket || true // false will return 404 response 
-  },
 });
 
 export default { fetch };
 
-export const WsConnection = createWsConnectionClass({
-  ...settings,
-  onConnect(ctx) {
-    // your custom ws authentication
-    // {req, env, socket} are available on ctx.extra
-    // connect init payload available at ctx.connectionParams
-    return true; // or undefined to allow connection
-  },
-});
+export const WsConnectionPool = createWsConnectionPoolClass(settings);
 ```
 
 ```toml
 # wrangler.toml
 [[migrations]]
-new_classes = ["WsConnection"]
+new_classes = ["WsConnectionPool"]
 tag = "v1"
 
 [build]
@@ -139,7 +125,7 @@ migrations_dir = "node_modules/graphql-worker-subscriptions/migrations"
 preview_database_id = "877f1123-088e-43ed-8d4d-37e71c77157c"
 
 [durable_objects]
-bindings = [{name = "WS_CONNECTION", class_name = "WsConnection"}]
+bindings = [{name = "WS_CONNECTION_POOL", class_name = "WsConnectionPool"}]
 ```
 
 ### Deployment
@@ -173,6 +159,39 @@ curl -X POST https://graphql-worker-subscriptions.bubblydoo.workers.dev/publish 
 ```
 
 To disable this, pass `isAuthorized: () => false` to `handleSubscriptions`, or add custom authorization logic there.
+
+### Pooling
+
+To minimize Durable Objects costs, one Pool can manage many WebSocket connections.
+
+There are 3 pooling options:
+- `global`: There is 1 global Pool that manages all WebSocket connections.
+- `colo`: There's 1 Pool per datacenter, based on [`request.cf.colo`](https://developers.cloudflare.com/workers/runtime-apis/request/#incomingrequestcfproperties)
+- `continent`: There's 1 Pool per continent, based on [`request.cf.continent`](https://developers.cloudflare.com/workers/runtime-apis/request/#incomingrequestcfproperties) (default)
+- `none`: Every connection uses its own Pool (its own Durable Object)
+
+You can also pass a custom pooling function to `handleSubscriptions`.
+
+### Expected costs
+
+Considering you used up all your included credits in the Paid Plan:
+
+One Pool (one Durable Object) is always charged at 128MB and will not sleep unless all its WebSockets are closed. Having one Pool run for 1 month (2600000 seconds) will be about 325000GBs, which would (at the time of writing) cost $4.0625. With a global pool, that would also be your maximum cost.
+
+1 new connection causes:
+- 1 D1 query
+- 1 Durable Object request (fetch)
+
+1 GraphQL subscription causes:
+- 1 Durable Object fetch (incoming WebSocket message)
+
+1 publish causes:
+- 1 D1 query
+- 1 Durable Object request (fetch) per Pool that has a connection that the publish will send to
+
+If you would publish a message every second for 1 month to 100 WebSockets in 1 Pool, this would cause only 1 D1 query and 1 Durable Object request per second, and would cost you about $0.648/month. D1 is still free for now.
+
+According to the pricing docs, there is no charge for outgoing WebSocket messages.
 
 ### Internal details
 
