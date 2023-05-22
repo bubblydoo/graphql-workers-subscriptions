@@ -1,6 +1,5 @@
 import { GraphQLSchema } from "graphql";
 import { handleProtocols } from "graphql-ws";
-import { fixD1BetaEnv } from "./fixD1BetaEnv";
 import { createDefaultPublishableContext } from "./publishableContext";
 import { CreateContextFn } from "./types";
 import { useWebsocket } from "./useWebsocket";
@@ -34,10 +33,7 @@ export function createWsConnectionClass<Env extends {} = {}>(
 }): ConstructableDurableObject<Env> {
   return class WsConnection implements DurableObject {
     private server: WebSocket | undefined;
-    private env: Env;
-    constructor(private state: DurableObjectState, env: Env) {
-      this.env = fixD1BetaEnv(env);
-    }
+    constructor(private state: DurableObjectState, private env: Env) {}
     async fetch(request: Request) {
       const path = new URL(request.url).pathname;
       // DO router
