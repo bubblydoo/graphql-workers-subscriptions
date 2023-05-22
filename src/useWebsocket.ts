@@ -63,8 +63,7 @@ export async function useWebsocket(
       },
       close: (code, reason) => {
         log("Closing connection", code);
-
-        if (code === 4400) console.error(reason);
+        if (code >= 4000 && code < 5000) console.error(reason);
         socket.close(code, reason);
       },
       onMessage: (cb) =>
