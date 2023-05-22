@@ -76,7 +76,8 @@ export function createWsConnectionPoolClass<Env extends {} = {}>({
               );
               await db.insertSubscription(this.subscriptionsDb, subscription);
             },
-            () => db.deleteSubscription(this.subscriptionsDb, connectionId)
+            () => db.deleteConnectionSubscriptions(this.subscriptionsDb, connectionId),
+            (id) => db.deleteSubscription(this.subscriptionsDb, id)
           );
           return new Response(null, {
             status: 101,
@@ -94,7 +95,7 @@ export function createWsConnectionPoolClass<Env extends {} = {}>({
           const connectionId = pathParts[1];
           const connection = this.connections.get(connectionId);
           if (!connection) {
-            await db.deleteSubscription(this.subscriptionsDb, connectionId);
+            await db.deleteConnectionSubscriptions(this.subscriptionsDb, connectionId);
             return new Response("ok");
           }
           // delete from D1 handled by `useWebsocket`
@@ -115,7 +116,7 @@ export function createWsConnectionPoolClass<Env extends {} = {}>({
               // it's probably because the durable object was somehow destroyed,
               // in which case the websocket was closed and we can delete it from the database
               // - if it's already closed (maybe by the client) we can also delete it
-              await db.deleteSubscription(this.subscriptionsDb, connectionId);
+              await db.deleteConnectionSubscriptions(this.subscriptionsDb, connectionId);
               continue;
             }
             connection.send(JSON.stringify(message));

@@ -26,14 +26,25 @@ export const insertSubscription = async (
     .run();
 };
 
-export const deleteSubscription = async (
+export const deleteConnectionSubscriptions = async (
   subscriptionsDb: D1Database,
   connectionId: string
 ) => {
-  log("Deleting connection from db", connectionId);
+  log("Deleting connection subscriptions from db", connectionId);
   await subscriptionsDb
     .prepare(`DELETE FROM ${tableName} WHERE connectionId = ?`)
     .bind(connectionId)
+    .run();
+};
+
+export const deleteSubscription = async (
+  subscriptionsDb: D1Database,
+  id: string
+) => {
+  log("Deleting subscription from db", id);
+  await subscriptionsDb
+    .prepare(`DELETE FROM ${tableName} WHERE id = ?`)
+    .bind(id)
     .run();
 };
 

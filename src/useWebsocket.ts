@@ -24,7 +24,8 @@ export async function useWebsocket<Env extends {} = any>(
   onConnect: OnConnectFn<Env>,
   env: Env,
   createSubscription: (message: SubscribeMessage) => Promise<void>,
-  deleteSubscription: () => Promise<void>
+  deleteConnectionSubscriptions: () => Promise<void>,
+  deleteSubscription: (id: string) => Promise<void>
 ) {
   // configure and make server
   const server = makeServer({
@@ -79,6 +80,9 @@ export async function useWebsocket<Env extends {} = any>(
             if (data.type === "subscribe") {
               // handle subscribe with specific handler
               await createSubscription(data);
+            } else if (data.type === "complete") {
+              // handle complete with specific handler
+              await deleteSubscription(data.id);
             } else {
               // or just use default handler
               cb(JSON.stringify(data));
@@ -102,7 +106,7 @@ export async function useWebsocket<Env extends {} = any>(
 
     // this callback is called whenever the socket closes, so deleting from D1 only here is enough
 
-    await deleteSubscription();
+    await deleteConnectionSubscriptions();
 
     callOnClosed(code, reason);
   }) as any);
