@@ -65,21 +65,23 @@ const yoga = createYoga<DefaultPublishableContext<ENV>>({
   graphiql: {
     // Use WebSockets in GraphiQL
     subscriptionsProtocol: "WS",
-    defaultQuery: `mutation Say {
-  greet(greeting: "hi!")
-}
+    defaultQuery: /* GraphQL */ `
+      mutation Say {
+        greet(greeting: "hi!")
+      }
 
-subscription Listen {
-  greetings {
-    greeting
-  }
-}
+      subscription Listen {
+        greetings {
+          greeting
+        }
+      }
 
-subscription ListenToHi {
-  greetings(greeting: "hi!") {
-    greeting
-  }
-}`,
+      subscription ListenToHi {
+        greetings(greeting: "hi!") {
+          greeting
+        }
+      }
+    `,
   },
 });
 
@@ -97,7 +99,10 @@ const baseFetch: ExportedHandlerFetchHandler<ENV> = (
     })
   );
 
-const fetch = handleSubscriptions({ fetch: baseFetch, ...settings });
+const fetch = handleSubscriptions({
+  fetch: baseFetch,
+  ...settings,
+});
 
 export default { fetch };
 

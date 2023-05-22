@@ -9,6 +9,7 @@ Features:
 - 🔍 In-database JSON filtering
 - 🗺 Publish from anywhere
 - 🎹 Great typings
+- 🔐 Authentication
 
 ```ts
 // app.ts
@@ -96,7 +97,10 @@ const baseFetch: ExportedHandlerFetchHandler<ENV> = (
     })
   );
 
-const fetch = handleSubscriptions({ fetch: baseFetch, ...settings });
+const fetch = handleSubscriptions({
+  fetch: baseFetch,
+  ...settings,
+});
 
 export default { fetch };
 
@@ -193,7 +197,7 @@ According to the pricing docs, there is no charge for outgoing WebSocket message
 
 Subscriptions are stored inside D1.
 
-The D1 database has 4 columns:
+The D1 database has 5 columns:
 
 - id (websocket message id that will be matched with the client-side subscription, a string)
 - connectionId (a Durable Object id, a string)

@@ -22,9 +22,9 @@ export function handleSubscriptions<
       wsConnectionPool,
       subscriptionsDb,
     }),
-  publishPathName = "/publish",
-  wsConnectPathName = "/graphql",
   pooling = "continent",
+  publishPathName = () => "/publish",
+  wsConnectPathName = () => "/graphql",
 }: {
   fetch?: T;
   schema: GraphQLSchema;
@@ -41,14 +41,22 @@ export function handleSubscriptions<
     executionCtx: ExecutionContext,
     requestBody: any
   ) => any;
-  publishPathName?: string;
-  wsConnectPathName?: string;
   pooling?:
     | "global"
     | "colo"
     | "continent"
     | "none"
     | ((req: Request, env: Env) => MaybePromise<string>);
+  publishPathName?: (
+    request: Request,
+    env: Env,
+    executionCtx: ExecutionContext
+  ) => string;
+  wsConnectPathName?: (
+    request: Request,
+    env: Env,
+    executionCtx: ExecutionContext
+  ) => string;
 }): T {
   const wrappedFetch = (async (request, env, executionCtx) => {
     const authorized =
@@ -63,7 +71,10 @@ export function handleSubscriptions<
     const upgradeHeader = request.headers.get("Upgrade");
     const path = new URL(request.url).pathname;
 
-    if (path === publishPathName && request.method === "POST") {
+    if (
+      path === publishPathName(request, env, executionCtx) &&
+      request.method === "POST"
+    ) {
       log("Received publish request");
       const reqBody: { topic: string; payload?: any } = await request.json();
       if (!reqBody.topic)
@@ -77,7 +88,10 @@ export function handleSubscriptions<
       executionCtx.waitUntil(publish(reqBody));
 
       return new Response("ok");
-    } else if (path === wsConnectPathName && upgradeHeader === "websocket") {
+    } else if (
+      path === wsConnectPathName(request, env, executionCtx) &&
+      upgradeHeader === "websocket"
+    ) {
       log("Received new websocket connection");
       const poolingStrategyFn =
         typeof pooling === "function" ? pooling : poolingStrategies[pooling];
@@ -95,6 +109,7 @@ export function handleSubscriptions<
     if (typeof fetch === "function") {
       return await fetch(request, env, executionCtx);
     }
+    
     return new Response("not_found", { status: 404 });
   }) as T;
   return wrappedFetch;

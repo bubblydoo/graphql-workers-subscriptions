@@ -12,7 +12,7 @@ import { OnConnectFn } from "./types";
 
 /**
  * Accept and handle websocket connection with `graphql-ws`.
- * 
+ *
  * Handles messages, close, ping-pong
  */
 export async function useWebsocket<Env extends {} = any>(
@@ -36,7 +36,7 @@ export async function useWebsocket<Env extends {} = any>(
   // accept socket to begin
   socket.accept();
 
-  // subprotocol pinger because WS level ping/pongs are not be available
+  // subprotocol pinger because WS level ping/pongs are not available
   let pinger: any, pongWait: any;
   function ping() {
     // READY_STATE_OPEN value
