@@ -2,7 +2,6 @@ import { GraphQLSchema } from "graphql";
 import { handleProtocols } from "graphql-ws";
 import * as db from "./db";
 import { resolveSubscription } from "./resolveSubscription";
-import { fixD1BetaEnv } from "./fixD1BetaEnv";
 import { createDefaultPublishableContext } from "./publishableContext";
 import { CreateContextFn } from "./types";
 import { useWebsocket } from "./useWebsocket";
@@ -32,10 +31,8 @@ export function createWsConnectionPoolClass<Env extends {} = {}>({
 }): ConstructableDurableObject<Env> {
   return class WsConnectionPool implements DurableObject {
     private connections = new Map<string, WebSocket>();
-    private env: Env;
     private subscriptionsDb: D1Database;
-    constructor(private state: DurableObjectState, env: Env) {
-      this.env = fixD1BetaEnv(env);
+    constructor(private state: DurableObjectState, private env: Env) {
       this.subscriptionsDb = subscriptionsDb(this.env);
     }
     async fetch(request: Request) {
