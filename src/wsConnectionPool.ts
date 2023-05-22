@@ -3,7 +3,7 @@ import { handleProtocols } from "graphql-ws";
 import * as db from "./db";
 import { resolveSubscription } from "./resolveSubscription";
 import { createDefaultPublishableContext } from "./publishableContext";
-import { CreateContextFn } from "./types";
+import { CreateContextFn, OnConnectFn } from "./types";
 import { useWebsocket } from "./useWebsocket";
 
 type ConstructableDurableObject<Env> = {
@@ -23,11 +23,13 @@ export function createWsConnectionPoolClass<Env extends {} = {}>({
       wsConnectionPool,
       schema,
     }),
+  onConnect = () => undefined,
 }: {
   schema: GraphQLSchema;
   subscriptionsDb: (env: Env) => D1Database;
   wsConnectionPool: (env: Env) => DurableObjectNamespace;
   context?: CreateContextFn<Env, ExecutionContext | undefined>;
+  onConnect?: OnConnectFn<Env>;
 }): ConstructableDurableObject<Env> {
   return class WsConnectionPool implements DurableObject {
     private connections = new Map<string, WebSocket>();
@@ -63,6 +65,8 @@ export function createWsConnectionPoolClass<Env extends {} = {}>({
             protocol,
             schema,
             context,
+            onConnect,
+            this.env,
             async (message) => {
               const subscription = await resolveSubscription(
                 message,

@@ -8,18 +8,21 @@ import {
 import { GraphQLSchema } from "graphql";
 import type { WebSocket } from "@cloudflare/workers-types";
 import { log } from "./log";
+import { OnConnectFn } from "./types";
 
 /**
  * Accept and handle websocket connection with `graphql-ws`.
  * 
  * Handles messages, close, ping-pong
  */
-export async function useWebsocket(
+export async function useWebsocket<Env extends {} = any>(
   socket: WebSocket,
   request: Request,
   protocol: ReturnType<typeof handleProtocols>,
   schema: GraphQLSchema,
   context: Record<string, any>,
+  onConnect: OnConnectFn<Env>,
+  env: Env,
   createSubscription: (message: SubscribeMessage) => Promise<void>,
   deleteSubscription: () => Promise<void>
 ) {
@@ -27,6 +30,7 @@ export async function useWebsocket(
   const server = makeServer({
     schema,
     context,
+    onConnect,
   });
 
   // accept socket to begin
@@ -88,7 +92,7 @@ export async function useWebsocket(
       onPong: () => clearTimeout(pongWait),
     },
     // pass values to the `extra` field in the context
-    { socket, request }
+    { socket, request, env }
   );
 
   // notify server that the socket closed and stop the pinger

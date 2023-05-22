@@ -1,5 +1,6 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { GraphQLResolveInfo } from "graphql";
+import { ServerOptions } from "graphql-ws";
 
 export type MaybePromise<T> = T | Promise<T>;
 
@@ -36,17 +37,26 @@ export interface SubscribePseudoIterable<
   // onComplete?: (...args: TSubscribeArgs) => MaybePromise<void>;
 }
 
-
 export interface PubSubEvent {
   topic: string;
   payload: Record<string, any>;
 }
 
-export type CreateContextFn<Env extends {} = {}, TExecutionContext = ExecutionContext> = (
+export type CreateContextFn<
+  Env extends {} = {},
+  TExecutionContext = ExecutionContext
+> = (
   request: Request,
   env: Env,
   executionContext: TExecutionContext
 ) => MaybePromise<Record<string, any>>;
+
+export type OnConnectFn<Env extends {} = {}> = ServerOptions<{
+  extra: {
+  env: Env;
+  socket: WebSocket;
+  request: Request;
+}}>["onConnect"];
 
 export interface SubscribeOptions<
   // TSubscribeArgs extends SubscribeArgs = SubscribeArgs
