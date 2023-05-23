@@ -21,7 +21,7 @@ import {
   subscribe,
   DefaultPublishableContext,
   createDefaultPublishableContext,
-} from "graphql-worker-subscriptions";
+} from "graphql-workers-subscriptions";
 
 export interface ENV {
   WS_CONNECTION_POOL: DurableObjectNamespace;
@@ -121,7 +121,7 @@ command = 'npm run build'
 binding = "SUBSCRIPTIONS"
 database_id = "877f1123-088e-43ed-8d4d-37e71c77157c"
 database_name = "SUBSCRIPTIONS"
-migrations_dir = "node_modules/graphql-worker-subscriptions/migrations"
+migrations_dir = "node_modules/graphql-workers-subscriptions/migrations"
 preview_database_id = "877f1123-088e-43ed-8d4d-37e71c77157c"
 
 [durable_objects]
@@ -155,7 +155,7 @@ wrangler dev
 You can use `POST /publish` on your Worker to publish events.
 
 ```shell
-curl -X POST https://graphql-worker-subscriptions.bubblydoo.workers.dev/publish -H 'Content-Type: application/json' -d '{"topic": "GREETINGS", "payload":{"greetings": {"greeting": "hi!"}}}'
+curl -X POST https://graphql-workers-subscriptions.bubblydoo.workers.dev/publish -H 'Content-Type: application/json' -d '{"topic": "GREETINGS", "payload":{"greetings": {"greeting": "hi!"}}}'
 ```
 
 To disable this, pass `isAuthorized: () => false` to `handleSubscriptions`, or add custom authorization logic there.
