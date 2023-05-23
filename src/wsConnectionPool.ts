@@ -11,7 +11,7 @@ type ConstructableDurableObject<Env> = {
 };
 
 /** Creates a WsConnection DurableObject class */
-export function createWsConnectionPoolClass<Env extends {} = {}>({
+export function createWsConnectionPoolClass<Env extends {} = {}, TConnectionParams extends {} = {}>({
   schema,
   subscriptionsDb,
   wsConnectionPool,
@@ -29,7 +29,7 @@ export function createWsConnectionPoolClass<Env extends {} = {}>({
   subscriptionsDb: (env: Env) => D1Database;
   wsConnectionPool: (env: Env) => DurableObjectNamespace;
   context?: CreateContextFn<Env, ExecutionContext | undefined>;
-  onConnect?: OnConnectFn<Env>;
+  onConnect?: OnConnectFn<Env, TConnectionParams>;
 }): ConstructableDurableObject<Env> {
   return class WsConnectionPool implements DurableObject {
     private connections = new Map<string, WebSocket>();
@@ -59,7 +59,7 @@ export function createWsConnectionPoolClass<Env extends {} = {}>({
 
           const context = await createContext(request, this.env, undefined);
 
-          await useWebsocket(
+          await useWebsocket<Env, TConnectionParams>(
             connection,
             request,
             protocol,

@@ -1,6 +1,7 @@
 import { IFieldResolver } from "@graphql-tools/utils";
 import { GraphQLResolveInfo } from "graphql";
 import { ServerOptions } from "graphql-ws";
+import type { WebSocket } from "@cloudflare/workers-types";
 
 export type MaybePromise<T> = T | Promise<T>;
 
@@ -51,12 +52,17 @@ export type CreateContextFn<
   executionContext: TExecutionContext
 ) => MaybePromise<Record<string, any>>;
 
-export type OnConnectFn<Env extends {} = {}> = ServerOptions<{
-  extra: {
-  env: Env;
-  socket: WebSocket;
-  request: Request;
-}}>["onConnect"];
+export type OnConnectFn<
+  Env extends {} = {},
+  TConnectionParams extends {} = {}
+> = ServerOptions<
+  TConnectionParams,
+  {
+    env: Env;
+    socket: WebSocket;
+    request: Request;
+  }
+>["onConnect"];
 
 export interface SubscribeOptions<
   // TSubscribeArgs extends SubscribeArgs = SubscribeArgs

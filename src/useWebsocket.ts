@@ -15,13 +15,13 @@ import { OnConnectFn } from "./types";
  *
  * Handles messages, close, ping-pong
  */
-export async function useWebsocket<Env extends {} = any>(
+export async function useWebsocket<Env extends {} = any, TConnectionParams extends {} = any>(
   socket: WebSocket,
   request: Request,
   protocol: ReturnType<typeof handleProtocols>,
   schema: GraphQLSchema,
   context: Record<string, any>,
-  onConnect: OnConnectFn<Env>,
+  onConnect: OnConnectFn<Env, TConnectionParams>,
   env: Env,
   createSubscription: (message: SubscribeMessage) => Promise<void>,
   deleteConnectionSubscriptions: () => Promise<void>,
