@@ -3,7 +3,7 @@ import { handleProtocols } from "graphql-ws";
 import * as db from "./db";
 import { resolveSubscription } from "./resolveSubscription";
 import { createDefaultPublishableContext } from "./publishableContext";
-import { CreateContextFn, OnConnectFn } from "./types";
+import { CreateContextFn, GraphQLWsServerOptions } from "./types";
 import { useWebsocket } from "./useWebsocket";
 
 type ConstructableDurableObject<Env> = {
@@ -11,7 +11,10 @@ type ConstructableDurableObject<Env> = {
 };
 
 /** Creates a WsConnection DurableObject class */
-export function createWsConnectionPoolClass<Env extends {} = {}, TConnectionParams extends {} = {}>({
+export function createWsConnectionPoolClass<
+  Env extends {} = {},
+  TConnectionParams extends {} = {}
+>({
   schema,
   subscriptionsDb,
   wsConnectionPool,
@@ -23,14 +26,16 @@ export function createWsConnectionPoolClass<Env extends {} = {}, TConnectionPara
       wsConnectionPool,
       schema,
     }),
-  onConnect = () => undefined,
+  ...otherServerOptions
 }: {
   schema: GraphQLSchema;
   subscriptionsDb: (env: Env) => D1Database;
   wsConnectionPool: (env: Env) => DurableObjectNamespace;
   context?: CreateContextFn<Env, ExecutionContext | undefined>;
-  onConnect?: OnConnectFn<Env, TConnectionParams>;
-}): ConstructableDurableObject<Env> {
+} & Omit<
+  GraphQLWsServerOptions<Env, TConnectionParams>,
+  "context" | "schema"
+>): ConstructableDurableObject<Env> {
   return class WsConnectionPool implements DurableObject {
     private connections = new Map<string, WebSocket>();
     private subscriptionsDb: D1Database;
@@ -59,14 +64,19 @@ export function createWsConnectionPoolClass<Env extends {} = {}, TConnectionPara
 
           const context = await createContext(request, this.env, undefined);
 
+          const serverOptions: GraphQLWsServerOptions<Env, TConnectionParams> =
+            {
+              ...otherServerOptions,
+              schema,
+              context,
+            };
+
           await useWebsocket<Env, TConnectionParams>(
             connection,
             request,
             protocol,
-            schema,
-            context,
-            onConnect,
             this.env,
+            serverOptions,
             async (message) => {
               const subscription = await resolveSubscription(
                 message,
@@ -76,7 +86,11 @@ export function createWsConnectionPoolClass<Env extends {} = {}, TConnectionPara
               );
               await db.insertSubscription(this.subscriptionsDb, subscription);
             },
-            () => db.deleteConnectionSubscriptions(this.subscriptionsDb, connectionId),
+            () =>
+              db.deleteConnectionSubscriptions(
+                this.subscriptionsDb,
+                connectionId
+              ),
             (id) => db.deleteSubscription(this.subscriptionsDb, id)
           );
           return new Response(null, {
@@ -95,7 +109,10 @@ export function createWsConnectionPoolClass<Env extends {} = {}, TConnectionPara
           const connectionId = pathParts[1];
           const connection = this.connections.get(connectionId);
           if (!connection) {
-            await db.deleteConnectionSubscriptions(this.subscriptionsDb, connectionId);
+            await db.deleteConnectionSubscriptions(
+              this.subscriptionsDb,
+              connectionId
+            );
             return new Response("ok");
           }
           // delete from D1 handled by `useWebsocket`
@@ -116,7 +133,10 @@ export function createWsConnectionPoolClass<Env extends {} = {}, TConnectionPara
               // it's probably because the durable object was somehow destroyed,
               // in which case the websocket was closed and we can delete it from the database
               // - if it's already closed (maybe by the client) we can also delete it
-              await db.deleteConnectionSubscriptions(this.subscriptionsDb, connectionId);
+              await db.deleteConnectionSubscriptions(
+                this.subscriptionsDb,
+                connectionId
+              );
               continue;
             }
             connection.send(JSON.stringify(message));

@@ -1,7 +1,7 @@
 {
   "name": "graphql-workers-subscriptions",
   "description": "Cloudflare Workers Topic-based GraphQL Subscriptions",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "type": "module",
   "license": "MIT",
   "homepage": "https://github.com/bubblydoo/graphql-workers-subscriptions#readme",
@@ -38,12 +38,9 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20221111.1",
-    "@databases/split-sql-query": "^1.0.3",
-    "@databases/sql": "^3.3.0",
+    "@cloudflare/workers-types": "^4.20230518.0",
     "@types/lodash": "^4.14.191",
     "@types/uuid": "^9.0.0",
-    "better-sqlite3": "^8.0.1",
     "esbuild": "^0.17.2",
     "esbuild-visualizer": "^0.4.0",
     "service-worker-mock": "2.0.5",

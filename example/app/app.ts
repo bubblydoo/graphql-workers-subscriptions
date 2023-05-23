@@ -10,7 +10,7 @@ import {
 
 export interface ENV {
   WS_CONNECTION_POOL: DurableObjectNamespace;
-  SUBSCRIPTIONS_DEV: D1Database;
+  SUBSCRIPTIONS: D1Database;
 }
 
 export const schema = makeExecutableSchema<DefaultPublishableContext<ENV>>({
@@ -57,7 +57,7 @@ export const schema = makeExecutableSchema<DefaultPublishableContext<ENV>>({
 const settings = {
   schema,
   wsConnectionPool: (env: ENV) => env.WS_CONNECTION_POOL,
-  subscriptionsDb: (env: ENV) => env.SUBSCRIPTIONS_DEV,
+  subscriptionsDb: (env: ENV) => env.SUBSCRIPTIONS,
 };
 
 const yoga = createYoga<DefaultPublishableContext<ENV>>({

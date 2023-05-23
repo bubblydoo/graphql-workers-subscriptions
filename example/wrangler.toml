@@ -17,10 +17,12 @@ new_classes = ["WsConnectionPool"]
 tag = "v2"
 
 [[d1_databases]]
-binding = "SUBSCRIPTIONS_DEV" # i.e. available in your Worker on env.DB
+binding = "SUBSCRIPTIONS" # available in your Worker on env.SUBSCRIPTIONS
 database_id = "cbcfa2b3-6731-44d1-8dee-74a9a964787d" 
-database_name = "SUBSCRIPTIONS_DEV" 
-migrations_dir = "node_modules/graphql-workers-subscriptions/migrations"
+database_name = "SUBSCRIPTIONS" 
+# In your setup, make sure this points to the correct node modules folder, usually:
+# migrations_dir = "node_modules/graphql-workers-subscriptions/migrations"
+migrations_dir = "../migrations"
 preview_database_id = "cbcfa2b3-6731-44d1-8dee-74a9a964787d" 
 
 [miniflare]
@@ -28,4 +30,6 @@ durable_objects_persist = true
 
 [durable_objects]
 bindings = [{name = "WS_CONNECTION_POOL", class_name = "WsConnectionPool"}]
-#wrangler d1 migrations create <SUBSCRIPTIONS_DEV> "CREATE_SUBSCRIPTION_TABLE"
+
+# To create the database and table, run:
+# wrangler d1 migrations apply SUBSCRIPTIONS

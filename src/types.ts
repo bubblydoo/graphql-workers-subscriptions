@@ -52,7 +52,8 @@ export type CreateContextFn<
   executionContext: TExecutionContext
 ) => MaybePromise<Record<string, any>>;
 
-export type OnConnectFn<
+/** ServerOptions from `graphql-ws`, with the `extra` field already typed */
+export type GraphQLWsServerOptions<
   Env extends {} = {},
   TConnectionParams extends {} = {}
 > = ServerOptions<
@@ -62,7 +63,7 @@ export type OnConnectFn<
     socket: WebSocket;
     request: Request;
   }
->["onConnect"];
+>;
 
 export interface SubscribeOptions<
   // TSubscribeArgs extends SubscribeArgs = SubscribeArgs

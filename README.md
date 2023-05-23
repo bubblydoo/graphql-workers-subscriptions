@@ -150,6 +150,40 @@ wrangler d1 migrations apply SUBSCRIPTIONS --local
 wrangler dev
 ```
 
+### Authentication
+
+For WebSocket authentication, you can pass `onConnect` to `createWsConnectionPoolClass` (read more documentation [here](https://the-guild.dev/graphql/ws/recipes#ws-server-and-client-auth-usage-with-token-expiration-validation-and-refresh)):
+
+```ts
+export const WsConnectionPool = createWsConnectionPoolClass<ENV, { token: string }>({
+  ...settings,
+  onConnect: (ctx) => {
+    const token = ctx.connectionParams.token;
+    return isTokenValid(token, ctx.extra.env.TOKEN);
+  },
+});
+```
+
+Then, on the frontend:
+
+```ts
+import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
+import { createClient } from 'graphql-ws';
+
+const wsLink = new GraphQLWsLink(
+  createClient({
+    url: "wss://subscriptions.workers.dev",
+    connectionParams: () => {
+      return { token: "<TOKEN>" };
+    }
+  })
+);
+```
+
+If you want to verify individual subscriptions, use `onSubscription`.
+
+To verify the incoming HTTP requests, use `isPublishAuthorized` and `isConnectAuthorized`.
+
 ### Publishing from outside Cloudflare
 
 You can use `POST /publish` on your Worker to publish events.
@@ -158,7 +192,7 @@ You can use `POST /publish` on your Worker to publish events.
 curl -X POST https://graphql-workers-subscriptions.bubblydoo.workers.dev/publish -H 'Content-Type: application/json' -d '{"topic": "GREETINGS", "payload":{"greetings": {"greeting": "hi!"}}}'
 ```
 
-To disable this, pass `isAuthorized: () => false` to `handleSubscriptions`, or add custom authorization logic there.
+To disable this, pass `isPublishAuthorized: () => false` to `handleSubscriptions`, or add custom authorization logic there.
 
 ### Pooling
 

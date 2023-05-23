@@ -5,10 +5,9 @@ import {
   stringifyMessage,
   SubscribeMessage,
 } from "graphql-ws";
-import { GraphQLSchema } from "graphql";
 import type { WebSocket } from "@cloudflare/workers-types";
 import { log } from "./log";
-import { OnConnectFn } from "./types";
+import { GraphQLWsServerOptions } from "./types";
 
 /**
  * Accept and handle websocket connection with `graphql-ws`.
@@ -19,20 +18,15 @@ export async function useWebsocket<Env extends {} = any, TConnectionParams exten
   socket: WebSocket,
   request: Request,
   protocol: ReturnType<typeof handleProtocols>,
-  schema: GraphQLSchema,
-  context: Record<string, any>,
-  onConnect: OnConnectFn<Env, TConnectionParams>,
   env: Env,
+  /** Includes schema and context */
+  serverOptions: GraphQLWsServerOptions<Env, TConnectionParams>,
   createSubscription: (message: SubscribeMessage) => Promise<void>,
   deleteConnectionSubscriptions: () => Promise<void>,
   deleteSubscription: (id: string) => Promise<void>
 ) {
   // configure and make server
-  const server = makeServer({
-    schema,
-    context,
-    onConnect,
-  });
+  const server = makeServer(serverOptions);
 
   // accept socket to begin
   socket.accept();

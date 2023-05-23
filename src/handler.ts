@@ -13,7 +13,8 @@ export function handleSubscriptions<
   schema,
   wsConnectionPool,
   subscriptionsDb,
-  isAuthorized,
+  isPublishAuthorized,
+  isConnectAuthorized,
   context: createContext = (request, env, executionCtx, requestBody) =>
     createDefaultPublishableContext({
       env,
@@ -30,11 +31,16 @@ export function handleSubscriptions<
   schema: GraphQLSchema;
   wsConnectionPool: (env: Env) => DurableObjectNamespace;
   subscriptionsDb: (env: Env) => D1Database;
-  isAuthorized?: (
+  isPublishAuthorized?: (
     request: Request,
     env: Env,
     executionCtx: ExecutionContext
-  ) => boolean | Promise<boolean>;
+  ) => MaybePromise<boolean>;
+  isConnectAuthorized?: (
+    request: Request,
+    env: Env,
+    executionCtx: ExecutionContext
+  ) => MaybePromise<boolean>;
   context?: (
     request: Request,
     env: Env,
@@ -59,12 +65,6 @@ export function handleSubscriptions<
   ) => string;
 }): T {
   const wrappedFetch = (async (request, env, executionCtx) => {
-    const authorized =
-      typeof isAuthorized === "function"
-        ? await isAuthorized(request.clone(), env, executionCtx)
-        : true;
-    if (!authorized) return new Response("unauthorized", { status: 400 });
-
     const WS_CONNECTION_POOL = wsConnectionPool(env);
     const SUBSCRIPTIONS_DB = subscriptionsDb(env);
 
@@ -75,7 +75,14 @@ export function handleSubscriptions<
       path === publishPathName(request, env, executionCtx) &&
       request.method === "POST"
     ) {
+      const authorized =
+        typeof isPublishAuthorized === "function"
+          ? await isPublishAuthorized(request.clone(), env, executionCtx)
+          : true;
+      if (!authorized) return new Response("unauthorized", { status: 400 });
+
       log("Received publish request");
+
       const reqBody: { topic: string; payload?: any } = await request.json();
       if (!reqBody.topic)
         return new Response("missing_topic_from_request", { status: 400 });
@@ -93,6 +100,13 @@ export function handleSubscriptions<
       upgradeHeader === "websocket"
     ) {
       log("Received new websocket connection");
+
+      const authorized =
+        typeof isConnectAuthorized === "function"
+          ? await isConnectAuthorized(request.clone(), env, executionCtx)
+          : true;
+      if (!authorized) return new Response("unauthorized", { status: 400 });
+
       const poolingStrategyFn =
         typeof pooling === "function" ? pooling : poolingStrategies[pooling];
       const stubName = await poolingStrategyFn(request, env);
