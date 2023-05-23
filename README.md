@@ -180,7 +180,7 @@ const wsLink = new GraphQLWsLink(
 );
 ```
 
-If you want to verify individual subscriptions, use `onSubscription`.
+If you want to verify individual subscriptions, use `onSubscribe`.
 
 To verify the incoming HTTP requests, use `isPublishAuthorized` and `isConnectAuthorized`.
 
