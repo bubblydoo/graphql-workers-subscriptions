@@ -32,6 +32,11 @@ export const resolveSubscription = async (
 
   const { topic, filter: filterFn } =
     field.subscribe as SubscribePseudoIterable<PubSubEvent>;
+
+  if (!topic) {
+    throw new Error("No topic found on subscribe field. Make sure to use subscribe correctly.");
+  }
+  
   // execute filter callback if defined (return filter data saved to D1)
   const filter =
     typeof filterFn === "function"
