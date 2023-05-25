@@ -6,7 +6,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "start": "wrangler dev --local --persist",
+    "dev": "wrangler dev --persist-to .wrangler/state",
     "check": "tsc --pretty --noEmit",
     "build": "esbuild app/app.ts --bundle --format=esm --outfile=dist-app/app.js --resolve-extensions=.mts,.mjs,.ts,.js,.json --define:DEBUG=true",
     "prepublishOnly": "npm run build"
