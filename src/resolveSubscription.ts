@@ -3,7 +3,7 @@ import type { SubscribePseudoIterable, PubSubEvent } from "./types";
 import {
   buildExecutionContext,
   ExecutionContext,
-} from "graphql/execution/execute";
+} from "./graphqlInternals";
 import { getResolverAndArgs } from "./getResolverAndArgs";
 import { GraphQLSchema } from "graphql";
 import { SubscribeMessage } from "graphql-ws";

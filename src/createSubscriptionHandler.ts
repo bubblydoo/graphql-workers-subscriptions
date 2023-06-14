@@ -1,5 +1,5 @@
 import { IFieldResolver } from "@graphql-tools/utils";
-import { PubSubEvent, SubscribeOptions, SubscribePseudoIterable } from "@/types";
+import { PubSubEvent, SubscribeOptions, SubscribePseudoIterable } from "./types";
 
 /**
  * Create a subscription handler for usage in the GraphQL schema.

@@ -1,7 +1,7 @@
 {
   "name": "graphql-workers-subscriptions",
   "description": "Cloudflare Workers Topic-based GraphQL Subscriptions",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "type": "module",
   "license": "MIT",
   "homepage": "https://github.com/bubblydoo/graphql-workers-subscriptions#readme",
@@ -28,18 +28,17 @@
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "check": "tsc --pretty --noEmit",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "yarn build"
   },
   "dependencies": {
     "@graphql-tools/utils": "^9.1.4",
     "graphql": "^16.6.0",
     "graphql-ws": "^5.11.2",
-    "lodash": "^4.17.21",
+    "radash": "^10.8.1",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20230518.0",
-    "@types/lodash": "^4.14.191",
     "@types/uuid": "^9.0.0",
     "esbuild": "^0.17.2",
     "esbuild-visualizer": "^0.4.0",

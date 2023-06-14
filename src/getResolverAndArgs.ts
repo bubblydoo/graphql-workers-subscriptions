@@ -1,12 +1,12 @@
 import { GraphQLError } from "graphql";
 import {
   buildResolveInfo,
-  ExecutionContext,
+  type ExecutionContext,
   getFieldDef,
-} from "graphql/execution/execute";
-import { collectFields } from "graphql/execution/collectFields";
-import { getArgumentValues } from "graphql/execution/values";
-import { addPath } from "graphql/jsutils/Path";
+  collectFields, 
+  getArgumentValues,
+  addPath,
+} from "./graphqlInternals";
 
 interface ResolverAndArgs {
   field: ReturnType<typeof getFieldDef>;

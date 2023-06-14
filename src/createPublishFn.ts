@@ -1,7 +1,7 @@
-import { Subscription } from "@/subscription";
+import { Subscription } from "./subscription";
 import { GraphQLSchema, parse, execute } from "graphql";
 import { MessageType, NextMessage } from "graphql-ws";
-import groupBy from "lodash/groupBy";
+import { group } from "radash"
 import * as db from "./db";
 import { log } from "./log";
 
@@ -43,7 +43,7 @@ async function publishToConnections(
 ) {
   log("Publishing to", subscriptions.length, "subscriptions");
   // group subscriptions by connection pool
-  const connectionPoolSubscriptionsMap = groupBy(
+  const connectionPoolSubscriptionsMap = group(
     subscriptions,
     (sub) => sub.connectionPoolId
   );
@@ -56,7 +56,7 @@ async function publishToConnections(
   const promises = Object.entries(connectionPoolSubscriptionsMap).map(
     async ([connectionPoolId, subscriptions]) => {
       const messagesAndConnectionIds = await Promise.all(
-        subscriptions.map(async (sub) => {
+        subscriptions!.map(async (sub) => {
           // execution of subscription with payload as the root (can be modified within the resolve callback defined in schema)
           // will return the payload as is by default
           const payload = await execute({

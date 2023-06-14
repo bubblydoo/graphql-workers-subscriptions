@@ -628,13 +628,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:^4.14.191":
-  version: 4.14.191
-  resolution: "@types/lodash@npm:4.14.191"
-  checksum: ba0d5434e10690869f32d5ea49095250157cae502f10d57de0a723fd72229ce6c6a4979576f0f13e0aa9fbe3ce2457bfb9fa7d4ec3d6daba56730a51906d1491
-  languageName: node
-  linkType: hard
-
 "@types/uuid@npm:^9.0.0":
   version: 9.0.0
   resolution: "@types/uuid@npm:9.0.0"
@@ -1919,13 +1912,12 @@ __metadata:
   dependencies:
     "@cloudflare/workers-types": ^4.20230518.0
     "@graphql-tools/utils": ^9.1.4
-    "@types/lodash": ^4.14.191
     "@types/uuid": ^9.0.0
     esbuild: ^0.17.2
     esbuild-visualizer: ^0.4.0
     graphql: ^16.6.0
     graphql-ws: ^5.11.2
-    lodash: ^4.17.21
+    radash: ^10.8.1
     service-worker-mock: 2.0.5
     tsup: ^6.5.0
     typescript: ^4.9.4
@@ -2255,13 +2247,6 @@ __metadata:
   version: 4.7.0
   resolution: "lodash.sortby@npm:4.7.0"
   checksum: db170c9396d29d11fe9a9f25668c4993e0c1331bcb941ddbd48fb76f492e732add7f2a47cfdf8e9d740fa59ac41bbfaf931d268bc72aab3ab49e9f89354d718c
-  languageName: node
-  linkType: hard
-
-"lodash@npm:^4.17.21":
-  version: 4.17.21
-  resolution: "lodash@npm:4.17.21"
-  checksum: eb835a2e51d381e561e508ce932ea50a8e5a68f4ebdd771ea240d3048244a8d13658acbd502cd4829768c56f2e16bdd4340b9ea141297d472517b83868e677f7
   languageName: node
   linkType: hard
 
@@ -2845,6 +2830,13 @@ __metadata:
   version: 1.2.3
   resolution: "queue-microtask@npm:1.2.3"
   checksum: b676f8c040cdc5b12723ad2f91414d267605b26419d5c821ff03befa817ddd10e238d22b25d604920340fd73efd8ba795465a0377c4adf45a4a41e4234e42dc4
+  languageName: node
+  linkType: hard
+
+"radash@npm:^10.8.1":
+  version: 10.8.1
+  resolution: "radash@npm:10.8.1"
+  checksum: aa6ff09c38023c02057676613578be3e93ced0a8d8edae69bdc91ecee5ac4bc51faf4d84d47ce21c93ac359e94457e25ad79d8e231ac083863d2e7d1603a285c
   languageName: node
   linkType: hard
 
