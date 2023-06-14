@@ -3,7 +3,7 @@ import { PubSubEvent, SubscribeOptions, SubscribePseudoIterable } from "./types"
 
 /**
  * Create a subscription handler for usage in the GraphQL schema.
- * 
+ *
  * This function implementation is confusing, but it is needed for the GraphQL schema to allow it.
  * It creates an async generator function that will never be executed, but
  * the GraphQL schema only accepts async generator functions for subscriptions.

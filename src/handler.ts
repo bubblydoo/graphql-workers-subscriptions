@@ -123,7 +123,7 @@ export function handleSubscriptions<
     if (typeof fetch === "function") {
       return await fetch(request, env, executionCtx);
     }
-    
+
     return new Response("not_found", { status: 404 });
   }) as T;
   return wrappedFetch;

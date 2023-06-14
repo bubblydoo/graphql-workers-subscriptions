@@ -36,7 +36,7 @@ export const resolveSubscription = async (
   if (!topic) {
     throw new Error("No topic found on subscribe field. Make sure to use subscribe correctly.");
   }
-  
+
   // execute filter callback if defined (return filter data saved to D1)
   const filter =
     typeof filterFn === "function"

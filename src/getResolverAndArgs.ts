@@ -3,7 +3,7 @@ import {
   buildResolveInfo,
   type ExecutionContext,
   getFieldDef,
-  collectFields, 
+  collectFields,
   getArgumentValues,
   addPath,
 } from "./graphqlInternals";
