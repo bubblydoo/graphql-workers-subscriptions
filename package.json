@@ -1,7 +1,7 @@
 {
   "name": "graphql-workers-subscriptions",
   "description": "Cloudflare Workers Topic-based GraphQL Subscriptions",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "type": "module",
   "license": "MIT",
   "homepage": "https://github.com/bubblydoo/graphql-workers-subscriptions#readme",

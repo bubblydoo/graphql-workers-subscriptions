@@ -21,7 +21,11 @@ export const resolveSubscription = async (
     document: parse(message.payload.query),
     variableValues: message.payload.variables,
     operationName: message.payload.operationName,
-  }) as ExecutionContext;
+  });
+  if (isErrorArray(execContext)) {
+    console.error(execContext.map((e) => e.message));
+    throw new Error("GraphQL buildExecutionContext error", { cause: execContext[0] });
+  }
   const { field, root, args, context, info } = getResolverAndArgs({
     execContext,
   });
@@ -54,3 +58,5 @@ export const resolveSubscription = async (
 
   return subscription;
 };
+
+const isErrorArray = (e: any): e is readonly any[] => Array.isArray(e);
