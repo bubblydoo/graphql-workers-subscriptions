@@ -9,7 +9,7 @@
     "dev": "wrangler dev --persist-to .wrangler/state",
     "check": "tsc --pretty --noEmit",
     "build": "esbuild app/app.ts --bundle --format=esm --outfile=dist-app/app.js --resolve-extensions=.mts,.mjs,.ts,.js,.json --define:DEBUG=true",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "yarn build"
   },
   "dependencies": {
     "@graphql-tools/schema": "^9.0.13",
@@ -21,10 +21,10 @@
     "graphql": "^16.6.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20230518.0",
+    "@cloudflare/workers-types": "^4.20250509.0",
     "esbuild": "^0.17.2",
     "esbuild-visualizer": "^0.4.0",
     "typescript": "^4.9.4",
-    "wrangler": "^3.0.1"
+    "wrangler": "^4.14.4"
   }
 }
